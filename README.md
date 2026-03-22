@@ -21,3 +21,4 @@ A comprehensive, standards-aligned secure hospital management system
 - Database: PostgreSQL
 - API: Django REST Framework
 - Auth: JWT
+"# shms-hospital-system" 
