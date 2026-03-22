@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: shms-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-shms_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - shms-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shms-backend
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY}
+      - DB_NAME=${DB_NAME:-shms_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_HOST=db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - shms-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: shms-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web
+    networks:
+      - shms-network
+
+volumes:
+  postgres_data:
+
+networks:
+  shms-network:
+    driver: bridge
