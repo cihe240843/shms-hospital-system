@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
+    'patients',  # ✅ ADD THIS
 ]
 
 MIDDLEWARE = [
@@ -92,7 +93,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',  # ✅ browser/admin
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # ✅ API/JWT
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
