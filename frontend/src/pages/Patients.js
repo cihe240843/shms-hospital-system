@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from "react";
 import api from "../api/api";
+import AddPatient from "./AddPatient";
 
-export default function Patients({ onLogout }) {
+export default function Patients() {
   const [patients, setPatients] = useState([]);
 
-  useEffect(() => {
+  const loadPatients = () => {
     api.get("patients/")
       .then(res => setPatients(res.data.results))
       .catch(() => alert("Access denied"));
+  };
+
+  useEffect(() => {
+    loadPatients();
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.reload(); // simplest and safe
+    window.location.reload();
   };
 
   return (
@@ -22,6 +27,10 @@ export default function Patients({ onLogout }) {
         <button onClick={handleLogout}>Logout</button>
       </header>
 
+      {/* CREATE PATIENT FORM */}
+      <AddPatient onCreated={loadPatients} />
+
+      {/* PATIENT LIST */}
       <ul>
         {patients.map(p => (
           <li key={p.id}>
