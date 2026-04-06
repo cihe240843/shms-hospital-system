@@ -9,8 +9,9 @@ export default function PatientDashboard() {
   const [appointments, setAppointments] = useState([]);
 
   const loadAppointments = () => {
-    api.get("appointments/")
-      .then(res => setAppointments(res.data.results || []))
+    api
+      .get("appointments/")
+      .then((res) => setAppointments(res.data.results || []))
       .catch(() => setAppointments([]));
   };
 
@@ -19,7 +20,7 @@ export default function PatientDashboard() {
   }, []);
 
   const reschedule = async (id) => {
-    const input = prompt("Enter new date/time (YYYY-MM-DD HH:MM)");
+    const input = prompt("Enter new date & time (YYYY-MM-DD HH:MM)");
     if (!input) return;
 
     await api.patch(`appointments/${id}/reschedule/`, {
@@ -30,7 +31,8 @@ export default function PatientDashboard() {
   };
 
   const cancel = async (id) => {
-    if (!window.confirm("Cancel appointment?")) return;
+    if (!window.confirm("Cancel this appointment?")) return;
+
     await api.patch(`appointments/${id}/cancel/`);
     loadAppointments();
   };
@@ -51,21 +53,27 @@ export default function PatientDashboard() {
 
           <div className="card">
             <h3>Your Appointments</h3>
+
             {appointments.length === 0 ? (
               <p>No appointments found.</p>
             ) : (
               <table>
                 <thead>
                   <tr>
-                    <th>Date</th>
+                    <th>Date & Time</th>
+                    <th>Doctor</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {appointments.map(a => (
+                  {appointments.map((a) => (
                     <tr key={a.id}>
-                      <td>{new Date(a.appointment_time).toLocaleString()}</td>
+                      <td>
+                        {new Date(a.appointment_time).toLocaleString()}
+                      </td>
+                      <td>{a.doctor_name}</td>
                       <td>{a.status}</td>
                       <td>
                         {a.status !== "CANCELLED" && (
@@ -90,14 +98,15 @@ export default function PatientDashboard() {
 
       {page === "reports" && (
         <div className="card">
+          <h3>Your Medical Reports</h3>
           <PatientReports />
         </div>
       )}
 
       {page === "profile" && (
         <div className="card">
-          <h3>Profile</h3>
-          <p>Profile details coming soon.</p>
+          <h3>Your Profile</h3>
+          <p>{/* future profile info */}</p>
         </div>
       )}
     </HospitalLayout>

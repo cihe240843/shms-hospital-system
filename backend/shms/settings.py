@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
+SECRET_KEY = os.getenv('4uDn0O0rqyPnuMfzGOcMMOD0vlhDiVXnZzBsmxZCTf6V9ZfYmLREnS-q30mljlS-8U_gBdubf-ygY6bEGHNvaA', 'django-insecure-dev-key-change-in-production')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
