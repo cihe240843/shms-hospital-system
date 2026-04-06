@@ -9,44 +9,63 @@ export default function Login({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post("token/", {
-        username,
-        password,
-      });
+      const res = await api.post("token/", { username, password });
+      const token = res.data.access;
 
-      const token = response.data.access;
       localStorage.setItem("token", token);
       setAuthToken(token);
       onLogin();
     } catch {
-      setError("Invalid credentials");
+      setError("Invalid username or password");
     }
   };
 
   return (
-    <div style={{ padding: "40px" }}>
-      <h2>Login</h2>
+    <div style={container}>
+      <div style={card}>
+        <h1>🏥 Secure Hospital System</h1>
+        <p style={{ color: "#666" }}>
+          Authorized staff login only
+        </p>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <form onSubmit={handleSubmit}>
-        <div>
+        <form onSubmit={handleSubmit}>
           <input
             placeholder="Username"
+            value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
-        </div>
 
-        <div>
           <input
             type="password"
             placeholder="Password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-        </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <button style={{ width: "100%", marginTop: "10px" }}>
+            Login
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
+
+/* Inline styles */
+const container = {
+  display: "flex",
+  height: "100vh",
+  justifyContent: "center",
+  alignItems: "center",
+};
+
+const card = {
+  background: "white",
+  padding: "40px",
+  borderRadius: "8px",
+  width: "360px",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+  textAlign: "center",
+};

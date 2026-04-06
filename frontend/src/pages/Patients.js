@@ -7,11 +7,9 @@ export default function Patients() {
   const [patients, setPatients] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // Load patients from API
   const loadPatients = () => {
-    api
-      .get("patients/")
-      .then((res) => setPatients(res.data.results))
+    api.get("patients/")
+      .then(res => setPatients(res.data.results))
       .catch(() => alert("Access denied"));
   };
 
@@ -19,74 +17,92 @@ export default function Patients() {
     loadPatients();
   }, []);
 
-  // Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.reload();
   };
 
-  // Delete patient (Admin only – backend enforced)
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this patient?")) return;
-
+    if (!window.confirm("Delete this patient record?")) return;
     try {
       await api.delete(`patients/${id}/`);
       loadPatients();
     } catch {
-      alert("You are not allowed to delete this patient.");
+      alert("Not authorised");
     }
   };
 
   return (
-    <div style={{ padding: "40px", maxWidth: "800px", margin: "auto" }}>
-      {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>Patients</h2>
+    <div style={page}>
+      <header style={header}>
+        <h2>🏥 Patient Management</h2>
         <button onClick={handleLogout}>Logout</button>
       </header>
 
-      <hr />
+      <div style={content}>
+        <AddPatient onCreated={loadPatients} />
 
-      {/* Create Patient (Admin / GP allowed) */}
-      <AddPatient onCreated={loadPatients} />
+        <table style={table}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-      <hr />
+          <tbody>
+            {patients.map(p => (
+              <tr key={p.id}>
+                <td>{p.first_name} {p.last_name}</td>
+                <td>{p.email}</td>
+                <td>
+                  <button onClick={() => setEditingId(p.id)}>Edit</button>
+                  <button onClick={() => handleDelete(p.id)}>Delete</button>
 
-      {/* Patients List */}
-      <ul>
-        {patients.map((p) => (
-          <li key={p.id} style={{ marginBottom: "10px" }}>
-            <strong>
-              {p.first_name} {p.last_name}
-            </strong>
-
-            <button
-              style={{ marginLeft: "10px" }}
-              onClick={() => setEditingId(p.id)}
-            >
-              Edit
-            </button>
-
-            <button
-              style={{ marginLeft: "5px" }}
-              onClick={() => handleDelete(p.id)}
-            >
-              Delete
-            </button>
-
-            {/* Edit Form */}
-            {editingId === p.id && (
-              <EditPatient
-                patient={p}
-                onUpdated={() => {
-                  setEditingId(null);
-                  loadPatients();
-                }}
-              />
-            )}
-          </li>
-        ))}
-      </ul>
+                  {editingId === p.id && (
+                    <EditPatient
+                      patient={p}
+                      onUpdated={() => {
+                        setEditingId(null);
+                        loadPatients();
+                      }}
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
+
+/* Styles */
+const page = {
+  background: "#f4f8fb",
+  minHeight: "100vh",
+};
+
+const header = {
+  background: "#1976d2",
+  color: "white",
+  padding: "16px 24px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+};
+
+const content = {
+  maxWidth: "1000px",
+  margin: "30px auto",
+  background: "white",
+  padding: "20px",
+  borderRadius: "8px",
+};
+
+const table = {
+  width: "100%",
+  borderCollapse: "collapse",
+};
