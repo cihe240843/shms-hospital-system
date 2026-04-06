@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django_filters',
     'patients',  # ✅ ADD THIS
     'audit',
+    'userprofiles',
 ]
 
 MIDDLEWARE = [
