@@ -1,81 +1,70 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/api";
 
-/* =========================
-   Styles
-   ========================= */
-
-const boxStyle = {
-  marginBottom: "20px",
-  padding: "16px",
-  border: "1px solid #ddd",
-  borderRadius: "6px",
-  background: "#f9fbfd",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "8px",
-  marginBottom: "10px",
-};
-
-/* =========================
-   Component
-   ========================= */
-
 export default function BookAppointment({ onBooked }) {
-  const [gpId, setGpId] = useState("");
+  const [gps, setGps] = useState([]);
+  const [selectedGp, setSelectedGp] = useState("");
   const [time, setTime] = useState("");
   const [message, setMessage] = useState("");
 
+  // Load GP list
+  useEffect(() => {
+    api.get("gps/")
+      .then((res) => setGps(res.data))
+      .catch(() => setGps([]));
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
 
     try {
       await api.post("appointments/", {
-        gp: gpId,
-        appointment_time: time,
+        gp: selectedGp,
+        appointment_time: new Date(time).toISOString(),
       });
 
       setMessage("✅ Appointment booked successfully");
-
-      setGpId("");
+      setSelectedGp("");
       setTime("");
 
-      // ✅ IMPORTANT: reload appointments list
-      if (onBooked) {
-        onBooked();
-      }
-    } catch {
+      if (onBooked) onBooked();
+    } catch (err) {
       setMessage("❌ Unable to book appointment");
     }
   };
 
   return (
-    <div style={boxStyle}>
-      <h3>Book Appointment</h3>
+    <form onSubmit={handleSubmit}>
+      <label><strong>Select GP</strong></label>
+      <select
+        value={selectedGp}
+        onChange={(e) => setSelectedGp(e.target.value)}
+        required
+      >
+        <option value="">-- Select a GP --</option>
+        {gps.map((gp) => (
+          <option key={gp.id} value={gp.id}>
+            Dr. {gp.first_name} {gp.last_name}
+          </option>
+        ))}
+      </select>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          style={inputStyle}
-          placeholder="GP User ID"
-          value={gpId}
-          onChange={(e) => setGpId(e.target.value)}
-          required
-        />
+      <br /><br />
 
-        <input
-          style={inputStyle}
-          type="datetime-local"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          required
-        />
+      <label><strong>Appointment Date &amp; Time</strong></label>
+      <input
+        type="datetime-local"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
+        required
+      />
 
-        <button type="submit">Book</button>
-      </form>
+      <br /><br />
+
+      <button type="submit">Book Appointment</button>
 
       {message && <p>{message}</p>}
-    </div>
+    </form>
   );
 }

@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+
 from .models import Appointment
 from .serializers import AppointmentSerializer
 
@@ -14,17 +15,17 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Patient → their appointments only
+        # Patient → only their appointments
         if hasattr(user, "patientprofile"):
             return Appointment.objects.filter(
                 patient=user.patientprofile.patient
             )
 
-        # GP → their appointments
-        if hasattr(user, "profile") and user.profile.role == "GP":
+        # GP → appointments assigned to them
+        if hasattr(user, "profile") and user.profile.role.upper() == "GP":
             return Appointment.objects.filter(gp=user)
 
-        # Admin / Nurse → all
+        # Admin / Nurse / Super Admin → all
         return Appointment.objects.all()
 
     def perform_create(self, serializer):
@@ -36,14 +37,15 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer.save(patient=user.patientprofile.patient)
 
 
-# ✅ Explicit reschedule endpoint
 def reschedule_appointment(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
     user = request.user
 
-    if not hasattr(user, "patientprofile") or \
-       appointment.patient != user.patientprofile.patient:
-        raise PermissionDenied("You can reschedule only your own appointment.")
+    if not hasattr(user, "patientprofile"):
+        raise PermissionDenied("Only patients can reschedule appointments.")
+
+    if appointment.patient != user.patientprofile.patient:
+        raise PermissionDenied("You can only reschedule your own appointment.")
 
     new_time = request.data.get("appointment_time")
     if not new_time:
@@ -59,14 +61,15 @@ def reschedule_appointment(request, pk):
     return Response(AppointmentSerializer(appointment).data)
 
 
-# ✅ Explicit cancel endpoint
 def cancel_appointment(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
     user = request.user
 
-    if not hasattr(user, "patientprofile") or \
-       appointment.patient != user.patientprofile.patient:
-        raise PermissionDenied("You can cancel only your own appointment.")
+    if not hasattr(user, "patientprofile"):
+        raise PermissionDenied("Only patients can cancel appointments.")
+
+    if appointment.patient != user.patientprofile.patient:
+        raise PermissionDenied("You can only cancel your own appointment.")
 
     appointment.status = "CANCELLED"
     appointment.save()

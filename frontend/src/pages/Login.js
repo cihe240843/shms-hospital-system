@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import api, { setAuthToken } from "../api/api";
+import "../layout/hospital.css";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -8,57 +9,62 @@ export default function Login({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const res = await api.post("token/", { username, password });
-      const token = res.data.access;
+    setError("");
 
+    try {
+      const res = await api.post("token/", {
+        username,
+        password,
+      });
+
+      const token = res.data.access;
       localStorage.setItem("token", token);
       setAuthToken(token);
       onLogin();
     } catch {
-      setError("Invalid login credentials");
+      setError("Invalid username or password");
     }
   };
 
   return (
-    <div style={container}>
-      <div style={card}>
+    <div className="login-page">
+      <div className="login-card">
         <h1>🏥 Secure Hospital System</h1>
-        <p>Staff & Patient Login</p>
+        <div className="login-subtitle">
+          Patient & Staff Secure Login
+        </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        {error && (
+          <p style={{ color: "red", marginBottom: "10px" }}>
+            {error}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit}>
           <input
-            placeholder="Username / Email"
+            type="text"
+            placeholder="Username or Email"
+            value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
           />
 
           <input
             type="password"
             placeholder="Password"
+            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
 
-          <button style={{ width: "100%" }}>Login</button>
+          <button type="submit">Login Securely</button>
         </form>
+
+        <div className="login-footer">
+          © 2026 Secure Hospital System <br />
+          Authorized access only
+        </div>
       </div>
     </div>
   );
 }
-
-const container = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  height: "100vh",
-  background: "#f4f8fb",
-};
-
-const card = {
-  background: "white",
-  padding: "40px",
-  borderRadius: "8px",
-  width: "360px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-};

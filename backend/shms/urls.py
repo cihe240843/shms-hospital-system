@@ -4,7 +4,6 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from accounts.views import MeView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -13,14 +12,15 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # ✅ WHO AM I — DIRECT (NO include)
-    path("api/me/", MeView.as_view(), name="me"),
+    # ✅ ACCOUNTS (me + gps)
+    path("api/", include("accounts.urls")),
 
-    # Staff patient management
+    # Patients (staff-only)
     path("api/patients/", include("patients.urls")),
 
     # Appointments
     path("api/appointments/", include("appointments.urls")),
-    path("api/reports/", include("reports.urls")),
 
+    # Reports
+    path("api/reports/", include("reports.urls")),
 ]

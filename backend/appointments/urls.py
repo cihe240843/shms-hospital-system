@@ -12,10 +12,17 @@ router = DefaultRouter()
 router.register(r"", AppointmentViewSet, basename="appointments")
 
 urlpatterns = [
-    # Router URLs:
     *router.urls,
-
-    # ✅ Explicit action URLs (NO router magic)
-    path("<uuid:pk>/reschedule/", api_view(["PATCH"])(permission_classes([IsAuthenticated])(reschedule_appointment))),
-    path("<uuid:pk>/cancel/", api_view(["PATCH"])(permission_classes([IsAuthenticated])(cancel_appointment))),
+    path(
+        "<uuid:pk>/reschedule/",
+        api_view(["PATCH"])(
+            permission_classes([IsAuthenticated])(reschedule_appointment)
+        ),
+    ),
+    path(
+        "<uuid:pk>/cancel/",
+        api_view(["PATCH"])(
+            permission_classes([IsAuthenticated])(cancel_appointment)
+        ),
+    ),
 ]

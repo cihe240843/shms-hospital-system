@@ -1,47 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../api/api";
+import HospitalLayout from "../layout/hospitalLayout";
 import BookAppointment from "./BookAppointment";
 import PatientReports from "./PatientReports";
 
-
-/* =========================
-   Styles
-   ========================= */
-
-const page = { minHeight: "100vh", background: "#f4f8fb" };
-const header = {
-  background: "#1976d2",
-  color: "white",
-  padding: "16px 24px",
-  display: "flex",
-  justifyContent: "space-between",
-};
-const content = {
-  maxWidth: "800px",
-  margin: "30px auto",
-  background: "white",
-  padding: "24px",
-  borderRadius: "8px",
-};
-const button = { marginRight: "8px" };
-
-/* =========================
-   Component
-   ========================= */
-
 export default function PatientDashboard() {
+  const [page, setPage] = useState("dashboard");
   const [appointments, setAppointments] = useState([]);
-  const [newTime, setNewTime] = useState("");
 
   const loadAppointments = () => {
     api.get("appointments/")
-      .then(res => {
-        if (Array.isArray(res.data.results)) {
-          setAppointments(res.data.results);
-        } else {
-          setAppointments([]);
-        }
-      })
+      .then(res => setAppointments(res.data.results || []))
       .catch(() => setAppointments([]));
   };
 
@@ -49,81 +18,88 @@ export default function PatientDashboard() {
     loadAppointments();
   }, []);
 
+  const reschedule = async (id) => {
+    const input = prompt("Enter new date/time (YYYY-MM-DD HH:MM)");
+    if (!input) return;
+
+    await api.patch(`appointments/${id}/reschedule/`, {
+      appointment_time: new Date(input).toISOString(),
+    });
+
+    loadAppointments();
+  };
+
+  const cancel = async (id) => {
+    if (!window.confirm("Cancel appointment?")) return;
+    await api.patch(`appointments/${id}/cancel/`);
+    loadAppointments();
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     window.location.reload();
   };
 
-  const reschedule = async (id) => {
-    if (!newTime) {
-      alert("Select a new date/time first.");
-      return;
-    }
-
-const isoTime = new Date(newTime).toISOString();
-
-await api.patch(`appointments/${id}/reschedule/`, {
-  appointment_time: isoTime,
-});
-    setNewTime("");
-    loadAppointments();
-  };
-
-  const cancel = async (id) => {
-    if (!window.confirm("Cancel this appointment?")) return;
-
-    await api.patch(`appointments/${id}/cancel/`);
-    loadAppointments();
-  };
-
   return (
-    <div style={page}>
-      <header style={header}>
-        <h2>🏥 Patient Portal</h2>
-        <button onClick={logout}>Logout</button>
-      </header>
+    <HospitalLayout setPage={setPage} onLogout={logout}>
+      {page === "dashboard" && (
+        <>
+          <div className="card">
+            <h3>Book Appointment</h3>
+            <BookAppointment onBooked={loadAppointments} />
+          </div>
 
-      <div style={content}>
-        <BookAppointment onBooked={loadAppointments} />
-<hr />
-<PatientReports />
+          <div className="card">
+            <h3>Your Appointments</h3>
+            {appointments.length === 0 ? (
+              <p>No appointments found.</p>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.map(a => (
+                    <tr key={a.id}>
+                      <td>{new Date(a.appointment_time).toLocaleString()}</td>
+                      <td>{a.status}</td>
+                      <td>
+                        {a.status !== "CANCELLED" && (
+                          <>
+                            <button onClick={() => reschedule(a.id)}>
+                              Reschedule
+                            </button>{" "}
+                            <button onClick={() => cancel(a.id)}>
+                              Cancel
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </>
+      )}
 
+      {page === "reports" && (
+        <div className="card">
+          <PatientReports />
+        </div>
+      )}
 
-        
-        <h3>Your Appointments</h3>
-
-        <input
-          type="datetime-local"
-          value={newTime}
-          onChange={(e) => setNewTime(e.target.value)}
-        />
-
-        <ul>
-          {appointments.map(a => (
-            <li key={a.id}>
-              <strong>
-                {new Date(a.appointment_time).toLocaleString()}
-              </strong>
-              {" "}— <em>{a.status}</em>
-              <br />
-
-              {a.status !== "CANCELLED" && (
-                <>
-                  <button
-                    style={button}
-                    onClick={() => reschedule(a.id)}
-                  >
-                    Reschedule
-                  </button>
-                  <button onClick={() => cancel(a.id)}>
-                    Cancel
-                  </button>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+      {page === "profile" && (
+        <div className="card">
+          <h3>Profile</h3>
+          <p>Profile details coming soon.</p>
+        </div>
+      )}
+    </HospitalLayout>
   );
 }
