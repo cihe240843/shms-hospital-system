@@ -28,6 +28,8 @@ INSTALLED_APPS = [
     'patients',  # ✅ ADD THIS
     'audit',
     'userprofiles',
+    'appointments',
+    'reports',
 ]
 
 MIDDLEWARE = [

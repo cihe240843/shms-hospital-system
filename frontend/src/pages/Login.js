@@ -16,7 +16,7 @@ export default function Login({ onLogin }) {
       setAuthToken(token);
       onLogin();
     } catch {
-      setError("Invalid username or password");
+      setError("Invalid login credentials");
     }
   };
 
@@ -24,41 +24,35 @@ export default function Login({ onLogin }) {
     <div style={container}>
       <div style={card}>
         <h1>🏥 Secure Hospital System</h1>
-        <p style={{ color: "#666" }}>
-          Authorized staff login only
-        </p>
+        <p>Staff & Patient Login</p>
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <input
-            placeholder="Username"
-            value={username}
+            placeholder="Username / Email"
             onChange={(e) => setUsername(e.target.value)}
           />
 
           <input
             type="password"
             placeholder="Password"
-            value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button style={{ width: "100%", marginTop: "10px" }}>
-            Login
-          </button>
+          <button style={{ width: "100%" }}>Login</button>
         </form>
       </div>
     </div>
   );
 }
 
-/* Inline styles */
 const container = {
   display: "flex",
-  height: "100vh",
   justifyContent: "center",
   alignItems: "center",
+  height: "100vh",
+  background: "#f4f8fb",
 };
 
 const card = {
@@ -67,5 +61,4 @@ const card = {
   borderRadius: "8px",
   width: "360px",
   boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-  textAlign: "center",
 };
