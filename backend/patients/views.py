@@ -27,3 +27,21 @@ class PatientViewSet(viewsets.ModelViewSet):
             resource_id=str(kwargs["pk"]),
         )
         return response
+
+    def perform_update(self, serializer):
+        patient = serializer.save()
+        AuditLog.objects.create(
+            user=self.request.user,
+            action="UPDATE",
+            resource="Patient",
+            resource_id=str(patient.id),
+        )
+
+    def perform_destroy(self, instance):
+        AuditLog.objects.create(
+            user=self.request.user,
+            action="DELETE",
+            resource="Patient",
+            resource_id=str(instance.id),
+        )
+        instance.delete()
