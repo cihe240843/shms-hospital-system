@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'patients',  # ✅ ADD THIS
+    'audit',
 ]
 
 MIDDLEWARE = [
