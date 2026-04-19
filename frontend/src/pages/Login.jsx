@@ -6,9 +6,12 @@ import './Login.css'
 export default function Login() {
   const [username, setUsername] = useState('dr.smith')
   const [password, setPassword]   = useState('password123')
+  const [otp, setOtp] = useState('')
+  const [challengeToken, setChallengeToken] = useState('')
+  const [mfaStep, setMfaStep] = useState(false)
   const [error, setError]         = useState('')
   const [loading, setLoading]     = useState(false)
-  const { login } = useAuth()
+  const { initiateLogin, verifyLogin } = useAuth()
   const navigate  = useNavigate()
 
   const handleSubmit = async e => {
@@ -16,24 +19,19 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const user = await login(username, password)
-      navigate(user?.role === 'patient' ? '/portal' : '/dashboard')
-    } catch {
-      setError('Invalid credentials. Try: dr.smith / password123')
+      if (!mfaStep) {
+        const data = await initiateLogin(username, password)
+        setChallengeToken(data.challenge_token)
+        setMfaStep(true)
+      } else {
+        const user = await verifyLogin(username, challengeToken, otp)
+        navigate(user?.role === 'patient' ? '/portal' : '/dashboard')
+      }
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
-  }
-
-  const quickLogin = async (u) => {
-    setUsername(u)
-    setLoading(true)
-    try {
-      const user = await login(u, 'password123')
-      navigate(user?.role === 'patient' ? '/portal' : '/dashboard')
-    }
-    catch { setError('Start Docker first: docker-compose up -d') }
-    finally { setLoading(false) }
   }
 
   return (
@@ -53,34 +51,50 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="login-form">
-            <div className="lf-group">
-              <label>Username</label>
-              <input value={username} onChange={e=>setUsername(e.target.value)}
-                placeholder="dr.smith" required />
-            </div>
-            <div className="lf-group">
-              <label>Password</label>
-              <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
-                placeholder="••••••••" required />
-            </div>
+            {!mfaStep && (
+              <>
+                <div className="lf-group">
+                  <label>Username</label>
+                  <input value={username} onChange={e=>setUsername(e.target.value)}
+                    placeholder="dr.smith" required />
+                </div>
+                <div className="lf-group">
+                  <label>Password</label>
+                  <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
+                    placeholder="••••••••" required />
+                </div>
+              </>
+            )}
+            {mfaStep && (
+              <>
+                <div className="notice notice-success" style={{ marginBottom: 12 }}>
+                  MFA code sent to your registered email.
+                </div>
+                <div className="lf-group">
+                  <label>OTP Code</label>
+                  <input value={otp} onChange={e=>setOtp(e.target.value)} placeholder="6-digit code" required />
+                </div>
+              </>
+            )}
             {error && <div className="login-error">{error}</div>}
             <button type="submit" className="btn-login" disabled={loading}>
-              {loading ? 'Signing in…' : 'Sign In Securely →'}
+              {loading ? 'Signing in…' : mfaStep ? 'Verify & Sign In' : 'Sign In Securely →'}
             </button>
+            {mfaStep && (
+              <div style={{ marginTop: 10, textAlign: 'left' }}>
+                <button type="button" className="ql-btn" onClick={() => { setMfaStep(false); setOtp(''); setChallengeToken('') }}>
+                  Back
+                </button>
+              </div>
+            )}
             <div style={{ marginTop: 10, textAlign: 'right' }}>
               <Link to="/forgot-password" style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, fontWeight: 700 }}>Forgot password?</Link>
             </div>
           </form>
 
           <div className="quick-logins">
-            <p className="ql-label">Quick Login (Demo)</p>
-            <div className="ql-grid">
-              {['dr.smith','nurse.jones','admin.lee','superadmin'].map(u=>(
-                <button key={u} className="ql-btn" onClick={()=>quickLogin(u)}>
-                  {u === 'dr.smith' ? '👨‍⚕️ GP' : u === 'nurse.jones' ? '👩‍⚕️ Nurse' : u === 'admin.lee' ? '🖥 Admin' : '🛡 Superadmin'}
-                </button>
-              ))}
-            </div>
+            <p className="ql-label">MFA Enabled</p>
+            <div className="login-badge">Enter username/password, then verify email OTP.</div>
           </div>
 
           <div className="login-badge">🔒 TLS 1.3 · JWT · OPA · FHIR R4</div>

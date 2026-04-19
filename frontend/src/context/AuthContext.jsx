@@ -26,8 +26,7 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  const login = async (username, password) => {
-    const { data } = await axios.post(`${BASE}/api/token/`, { username, password })
+  const finalizeLogin = async (username, data) => {
     const profile = await fetchProfile(data.access)
     const userObj = {
       username: profile.username || username,
@@ -46,6 +45,20 @@ export function AuthProvider({ children }) {
     return userObj
   }
 
+  const initiateLogin = async (username, password) => {
+    const { data } = await axios.post(`${BASE}/api/auth/login/initiate/`, { username, password })
+    return data
+  }
+
+  const verifyLogin = async (username, challengeToken, otp) => {
+    const { data } = await axios.post(`${BASE}/api/auth/login/verify/`, {
+      username,
+      challenge_token: challengeToken,
+      otp,
+    })
+    return finalizeLogin(username, data)
+  }
+
   const logout = () => {
     localStorage.clear()
     setUser(null)
@@ -62,7 +75,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, role, loading, initiateLogin, verifyLogin, logout, switchRole }}>
       {children}
     </AuthContext.Provider>
   )

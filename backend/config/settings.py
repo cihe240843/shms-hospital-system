@@ -31,6 +31,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.audit.middleware.AuditRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -100,3 +101,9 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
 EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@shms.local")
+
+# Authentication security (brute-force + MFA)
+AUTH_MAX_FAILED_ATTEMPTS = config("AUTH_MAX_FAILED_ATTEMPTS", default=5, cast=int)
+AUTH_LOCKOUT_MINUTES = config("AUTH_LOCKOUT_MINUTES", default=15, cast=int)
+AUTH_OTP_EXPIRY_MINUTES = config("AUTH_OTP_EXPIRY_MINUTES", default=5, cast=int)
+AUTH_OTP_LENGTH = config("AUTH_OTP_LENGTH", default=6, cast=int)

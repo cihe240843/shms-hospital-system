@@ -1,6 +1,7 @@
 import hashlib
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class AuditLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -24,3 +25,26 @@ class AuditLog(models.Model):
         data = f"{self.user_id}{self.action}{self.resource}{self.resource_id}{self.ip_address}{prev}"
         self.row_hash = hashlib.sha256(data.encode()).hexdigest()
         super().save(*args, **kwargs)
+
+
+class LoginSecurityState(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="login_security_state")
+    failed_attempts = models.PositiveIntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def is_locked(self):
+        return bool(self.locked_until and self.locked_until > timezone.now())
+
+
+class MFAChallenge(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="mfa_challenges")
+    token_hash = models.CharField(max_length=64)
+    otp_hash = models.CharField(max_length=64)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
