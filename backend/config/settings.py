@@ -95,6 +95,8 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 FHIR_BASE_URL = config("FHIR_BASE_URL", default="http://localhost:8090/fhir")
+FHIR_SYNC_ENABLED = config("FHIR_SYNC_ENABLED", default=True, cast=bool)
+FHIR_SYNC_TIMEOUT_SECONDS = config("FHIR_SYNC_TIMEOUT_SECONDS", default=10, cast=int)
 OPA_URL = config("OPA_URL", default="http://localhost:8181")
 MINIO_USER = config("MINIO_USER", default="minioadmin")
 MINIO_PASSWORD = config("MINIO_PASSWORD", default="minioadmin123")

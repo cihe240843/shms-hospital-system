@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from apps.common.fhir_client import sync_patient, FHIRSyncError
 from .models import Patient
 from .serializers import PatientSerializer
 
@@ -69,10 +70,31 @@ class PatientViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         role = infer_role(self.request.user)
+        patient = None
         if role == "gp" and not serializer.validated_data.get("primary_doctor"):
-            serializer.save(primary_doctor=self.request.user)
-            return
-        serializer.save()
+            patient = serializer.save(primary_doctor=self.request.user)
+        else:
+            patient = serializer.save()
+
+        try:
+            fhir_id = sync_patient(patient)
+            if fhir_id and patient.fhir_id != fhir_id:
+                patient.fhir_id = fhir_id
+                patient.save(update_fields=["fhir_id"])
+        except FHIRSyncError:
+            # Keep local patient creation available even if HAPI is temporarily unavailable.
+            pass
+
+    def perform_update(self, serializer):
+        patient = serializer.save()
+        try:
+            fhir_id = sync_patient(patient)
+            if fhir_id and patient.fhir_id != fhir_id:
+                patient.fhir_id = fhir_id
+                patient.save(update_fields=["fhir_id"])
+        except FHIRSyncError:
+            # Keep local updates available even if HAPI is temporarily unavailable.
+            pass
 
     @action(detail=True, methods=["post"], url_path="send-invite")
     def send_invite(self, request, pk=None):
