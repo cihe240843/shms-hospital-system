@@ -94,6 +94,34 @@ python scripts/backup.py
 python scripts/restore.py
 ```
 
+### Automatic nightly backup at 12:00 AM (Windows)
+
+Use the script below for Docker-safe custom-format backups:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/nightly_backup.ps1
+```
+
+Create a daily scheduled task at midnight:
+
+```powershell
+schtasks /Create /SC DAILY /ST 00:00 /TN "SHMS Nightly Backup" /TR "powershell -ExecutionPolicy Bypass -File E:\shms-full\shms-full\scripts\nightly_backup.ps1" /F
+```
+
+Run the task immediately to test:
+
+```powershell
+schtasks /Run /TN "SHMS Nightly Backup"
+```
+
+Backups are written to:
+
+```text
+backups/nightly/
+```
+
+The script keeps 14 days of backups by default.
+
 ---
 
 ## Configure Real Email (SMTP)

@@ -33,6 +33,7 @@ const AUDIT_ACTION_LABELS = {
 export default function AdminPanel() {
   const [tab, setTab] = useState('staff')
   const [auditFilter, setAuditFilter] = useState('all')
+  const [backuping, setBackuping] = useState(false)
   const [users, setUsers] = useState([])
   const [patients, setPatients] = useState([])
   const [doctors, setDoctors] = useState([])
@@ -95,8 +96,11 @@ export default function AdminPanel() {
           await loadPatients()
         } else if (tab === 'audit') {
           await loadAudit()
-        } else {
+        } else if (tab === 'security') {
           await loadSecurity()
+        } else {
+          setLoading(false)
+          return
         }
       } catch (e) {
         setErrorMsg(e.response?.data?.detail || 'Failed to load admin data.')
@@ -317,6 +321,34 @@ export default function AdminPanel() {
     }
   }
 
+  const handleCreateBackup = async () => {
+    resetMessages()
+    try {
+      setBackuping(true)
+      const response = await api.post('/api/audit/backup/export/', {}, { responseType: 'blob' })
+      const disposition = response.headers?.['content-disposition'] || ''
+      const contentType = response.headers?.['content-type'] || 'application/octet-stream'
+      const match = disposition.match(/filename="?([^";]+)"?/)
+      const fileName = match?.[1] || `shms_full_backup_${Date.now()}.sql`
+
+      const blob = new Blob([response.data], { type: contentType })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+
+      setSuccessMsg('SQL backup created and downloaded successfully.')
+    } catch (e) {
+      setErrorMsg(e.response?.data?.detail || 'Unable to create backup.')
+    } finally {
+      setBackuping(false)
+    }
+  }
+
   const roleBadge = r => {
     const role = (r || '').toLowerCase()
     const map = { gp:'blue', nurse:'blue', admin:'amber', superadmin:'red', patient:'gray' }
@@ -337,9 +369,9 @@ export default function AdminPanel() {
       />
 
       <div className="admin-tabs">
-        {['staff','patients','audit','security'].map(t => (
+        {['staff','patients','audit','security','backup'].map(t => (
           <button key={t} className={`admin-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'staff' ? 'Staff' : t === 'patients' ? 'Patients' : t === 'audit' ? 'Audit Log' : 'Security Analysis'}
+            {t === 'staff' ? 'Staff' : t === 'patients' ? 'Patients' : t === 'audit' ? 'Audit Log' : t === 'security' ? 'Security Analysis' : 'Backup'}
           </button>
         ))}
       </div>
@@ -544,6 +576,23 @@ export default function AdminPanel() {
             )}
           </div>
         </>
+      )}
+
+      {tab === 'backup' && (
+        <div className="card">
+          <h3 className="card-title">Database Backup</h3>
+          <p className="security-item-sub" style={{ marginBottom: 12 }}>
+            Create an on-demand backup snapshot from the superadmin portal.
+          </p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button className="btn-small btn-primary" onClick={handleCreateBackup} disabled={backuping}>
+              {backuping ? 'Creating Backup...' : 'Create Backup Now'}
+            </button>
+            <span style={{ color: 'var(--text3)', fontSize: 12 }}>
+              Downloads a PostgreSQL SQL backup file to your browser.
+            </span>
+          </div>
+        </div>
       )}
 
       <Modal

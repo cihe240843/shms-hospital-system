@@ -36,3 +36,9 @@ logs/
 # Local artifacts
 SHMS_Today_Instructions.rtf
 shms_migration_bundle_*.zip
+
+# Database backups (nightly and on-demand exports)
+backups/
+*.sql
+*.dump
+shms_full_backup*

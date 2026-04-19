@@ -1,10 +1,13 @@
 import hashlib
+import os
 import secrets
+import subprocess
 from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.mail import send_mail
 from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
@@ -645,3 +648,60 @@ class ResendUnlockTokenView(APIView):
             },
             status=200,
         )
+
+
+class DatabaseBackupExportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if not UserManagementView.is_superadmin(request.user):
+            return Response({"detail": "Only superadmin can create backups."}, status=403)
+
+        db_cfg = settings.DATABASES.get("default", {})
+        db_name = db_cfg.get("NAME", "shms")
+        db_user = db_cfg.get("USER", "shms_user")
+        db_password = db_cfg.get("PASSWORD", "")
+        db_host = db_cfg.get("HOST", "db")
+        db_port = str(db_cfg.get("PORT", "5432"))
+
+        timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"shms_full_backup_{timestamp}.sql"
+
+        command = [
+            "pg_dump",
+            "-h",
+            str(db_host),
+            "-p",
+            db_port,
+            "-U",
+            str(db_user),
+            "-d",
+            str(db_name),
+            "--no-password",
+            "--format=plain",
+            "--encoding=UTF8",
+        ]
+
+        env = os.environ.copy()
+        env["PGPASSWORD"] = str(db_password)
+
+        try:
+            result = subprocess.run(command, env=env, capture_output=True)
+            if result.returncode != 0:
+                _audit_event(request.user, "BACKUP_EXPORT_FAIL", "database", filename, request)
+                return Response({"detail": "Failed to generate SQL backup."}, status=500)
+
+            _audit_event(request.user, "BACKUP_EXPORT_SQL", "database", filename, request)
+            response = HttpResponse(result.stdout, content_type="application/sql; charset=utf-8")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["X-Backup-Format"] = "postgres-pg-dump-sql"
+            return response
+        except FileNotFoundError:
+            _audit_event(request.user, "BACKUP_EXPORT_FAIL", "database", "pg_dump_missing", request)
+            return Response(
+                {"detail": "SQL backup tool is not available yet. Rebuild backend container image first."},
+                status=503,
+            )
+        except Exception:
+            _audit_event(request.user, "BACKUP_EXPORT_FAIL", "database", filename, request)
+            return Response({"detail": "Failed to generate SQL backup."}, status=500)

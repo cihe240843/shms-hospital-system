@@ -11,6 +11,7 @@ from .views import (
 	UnlockAccountRequestView,
 	VerifyUnlockTokenView,
 	ResendUnlockTokenView,
+	DatabaseBackupExportView,
 )
 
 router = DefaultRouter()
@@ -25,5 +26,6 @@ urlpatterns = [
 	path("unlock/request/", UnlockAccountRequestView.as_view(), name="audit_unlock_request"),
 	path("unlock/verify/", VerifyUnlockTokenView.as_view(), name="audit_unlock_verify"),
 	path("unlock/resend/", ResendUnlockTokenView.as_view(), name="audit_unlock_resend"),
+	path("backup/export/", DatabaseBackupExportView.as_view(), name="audit_backup_export"),
 	path("", include(router.urls)),
 ]
