@@ -42,7 +42,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
       <Route path="/activate" element={<ActivateAccount />} />
-      <Route path="/forget-password" element={<ForgotPassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/unlock-account" element={<UnlockAccount />} />
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
