@@ -1,0 +1,51 @@
+.billing-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+	gap: 14px;
+	margin-bottom: 6px;
+}
+
+.billing-stat {
+	position: relative;
+	background: linear-gradient(180deg, #fff, #f8fcff);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-lg);
+	padding: 16px 18px;
+	box-shadow: var(--shadow);
+	overflow: hidden;
+}
+
+.billing-stat::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	background: linear-gradient(180deg, #1f90d9, #1bb89a);
+}
+
+.bs-label {
+	font-size: 11px;
+	color: var(--text3);
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	font-weight: 700;
+	padding-left: 4px;
+}
+
+.bs-val {
+	font-family: var(--serif);
+	font-size: 30px;
+	color: var(--text);
+	margin-top: 8px;
+	padding-left: 4px;
+}
+
+.bs-val.green {
+	color: var(--green);
+}
+
+.bs-val.amber {
+	color: var(--amber);
+}

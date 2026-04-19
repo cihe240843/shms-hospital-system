@@ -1,0 +1,122 @@
+.admin-tabs {
+	display: flex;
+	gap: 6px;
+	border-bottom: 1px solid var(--border);
+	margin-bottom: 16px;
+}
+
+.admin-tab {
+	padding: 10px 16px;
+	background: none;
+	border: 1px solid transparent;
+	border-bottom: none;
+	border-radius: 10px 10px 0 0;
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--text3);
+	transition: all 0.2s ease;
+}
+
+.admin-tab:hover {
+	color: var(--text);
+	background: #f3f8ff;
+}
+
+.admin-tab.active {
+	color: var(--navy);
+	background: linear-gradient(180deg, #ffffff, #f8fcff);
+	border-color: var(--border);
+	margin-bottom: -1px;
+}
+
+.audit-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 16px;
+	padding: 15px 16px;
+	background: linear-gradient(180deg, #fff, #f8fcff);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.integrity-block {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.integrity-label {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--text2);
+}
+
+.integrity-unknown {
+	font-size: 13px;
+	color: var(--text3);
+}
+
+.integrity-pass,
+.integrity-fail {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.integrity-pass {
+	color: var(--green);
+}
+
+.integrity-fail {
+	color: var(--red);
+}
+
+.dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.dot-green {
+	background: var(--green);
+	box-shadow: 0 0 0 4px rgba(15, 143, 98, 0.14);
+}
+
+.dot-red {
+	background: var(--red);
+	box-shadow: 0 0 0 4px rgba(189, 47, 47, 0.14);
+}
+
+.btn-verify {
+	padding: 9px 16px;
+	background: linear-gradient(120deg, var(--navy), var(--navy2));
+	border: none;
+	border-radius: var(--radius);
+	color: #b7fff7;
+	font-size: 12px;
+	font-weight: 800;
+	transition: all 0.2s ease;
+}
+
+.btn-verify:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 10px 18px rgba(15, 35, 66, 0.24);
+}
+
+.btn-verify:disabled {
+	opacity: 0.6;
+}
+
+.audit-tbl td {
+	font-size: 12px;
+	padding: 10px 14px;
+}

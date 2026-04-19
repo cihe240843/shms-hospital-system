@@ -1,0 +1,58 @@
+.patients-page {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
+.patients-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+.ph-card {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff, #f8fcff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+  overflow: hidden;
+}
+
+.ph-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--teal-light), #3ca0ff);
+}
+
+.ph-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text3);
+  font-weight: 700;
+  padding-left: 4px;
+}
+
+.ph-value {
+  margin-top: 8px;
+  font-family: var(--serif);
+  font-size: 30px;
+  color: var(--navy);
+  line-height: 1;
+  padding-left: 4px;
+}
+
+.patients-toolbar {
+  margin-bottom: 0;
+}
+
+.patients-table-wrap {
+  border-top: 4px solid rgba(24, 168, 157, 0.35);
+}

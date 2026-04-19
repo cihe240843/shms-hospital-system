@@ -1,0 +1,1 @@
+Add to Inventory.jsx top: import './Inventory.css'

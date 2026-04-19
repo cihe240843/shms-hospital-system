@@ -1,0 +1,116 @@
+.vitals-layout {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 18px;
+}
+
+.card-title {
+	font-size: 16px;
+	font-weight: 800;
+	margin-bottom: 18px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.fhir-badge {
+	font-size: 10px;
+	background: rgba(24, 168, 157, 0.12);
+	color: var(--teal);
+	border: 1px solid rgba(24, 168, 157, 0.3);
+	border-radius: 999px;
+	padding: 2px 8px;
+	font-weight: 700;
+}
+
+.vitals-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.vital-field label {
+	display: block;
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--text2);
+	margin-bottom: 5px;
+}
+
+.unit {
+	font-weight: 500;
+	color: var(--text3);
+	font-size: 11px;
+}
+
+.vitals-msg {
+	padding: 8px 12px;
+	border-radius: var(--radius);
+	font-size: 12px;
+	margin-bottom: 12px;
+	font-weight: 700;
+}
+
+.vitals-msg.ok {
+	background: var(--green-bg);
+	color: var(--green);
+}
+
+.vitals-msg.err {
+	background: var(--red-bg);
+	color: var(--red);
+}
+
+.vital-record {
+	padding: 13px;
+	background: #f9fcff;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	margin-bottom: 10px;
+}
+
+.vr-top {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 8px;
+	gap: 10px;
+}
+
+.vr-name {
+	font-size: 13px;
+	font-weight: 800;
+}
+
+.vr-time {
+	font-size: 11px;
+	color: var(--text3);
+}
+
+.vr-chips {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.vr-chip {
+	font-size: 11px;
+	font-weight: 700;
+	background: #fff;
+	border: 1px solid var(--border2);
+	border-radius: 7px;
+	padding: 2px 8px;
+	color: var(--text2);
+}
+
+.vr-chip.warn {
+	background: var(--red-bg);
+	border-color: #f5adad;
+	color: var(--red);
+}
+
+@media (max-width: 800px) {
+	.vitals-layout {
+		grid-template-columns: 1fr;
+	}
+}

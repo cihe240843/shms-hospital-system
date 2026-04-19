@@ -1,0 +1,74 @@
+.dash-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(320px, 1fr));
+	gap: 18px;
+}
+
+.dash-card {
+	background: linear-gradient(180deg, #ffffff, #f9fcff);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+}
+
+.dash-card-hd {
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.dash-card-hd h3 {
+	font-size: 16px;
+	font-weight: 800;
+	color: var(--text);
+}
+
+.link-btn {
+	background: none;
+	border: none;
+	color: var(--teal);
+	font-size: 12px;
+	font-weight: 800;
+}
+
+.link-btn:hover {
+	color: var(--teal-light);
+}
+
+.appt-list {
+	padding: 4px 0;
+}
+
+.appt-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 20px;
+	border-bottom: 1px solid var(--border);
+}
+
+.appt-row:last-child {
+	border-bottom: none;
+}
+
+.appt-time {
+	font-size: 12px;
+	font-weight: 800;
+	color: var(--teal);
+	width: 46px;
+	flex-shrink: 0;
+}
+
+.appt-name {
+	flex: 1;
+	font-size: 13px;
+}
+
+@media (max-width: 800px) {
+	.dash-grid {
+		grid-template-columns: 1fr;
+	}
+}

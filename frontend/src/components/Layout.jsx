@@ -1,0 +1,122 @@
+import { useState } from 'react'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import './Layout.css'
+
+const NAV = [
+  { path:'/dashboard',    icon:'⊞', label:'Dashboard',    roles:['gp','nurse','admin','superadmin'] },
+  { path:'/portal',       icon:'🧾', label:'My Portal',    roles:['patient'] },
+  { path:'/patients',     icon:'👤', label:'Patients',     roles:['gp','nurse','admin','superadmin'] },
+  { path:'/appointments', icon:'📅', label:'Appointments', roles:['gp','nurse','admin','superadmin'] },
+  { path:'/vitals',       icon:'💓', label:'Vitals Entry', roles:['nurse','superadmin'] },
+  { path:'/billing',      icon:'💳', label:'Billing',      roles:['admin','superadmin'] },
+  { path:'/inventory',    icon:'📦', label:'Inventory',    roles:['admin','superadmin'] },
+  { path:'/admin',        icon:'🛡', label:'Admin Panel',  roles:['superadmin'] },
+]
+
+const ROLE_NAMES = { gp:'Dr. Smith', nurse:'Nurse Jones', admin:'Admin Lee', superadmin:'Super Admin' }
+ROLE_NAMES.patient = 'Patient'
+const DEMO_USER_NAMES = {
+  'dr.smith': 'Dr. Smith',
+  'nurse.jones': 'Nurse Jones',
+  'admin.lee': 'Admin Lee',
+  'superadmin': 'Super Admin',
+}
+
+function getInitials(username, role) {
+  if (username) {
+    const parts = username.replace(/[^a-zA-Z0-9]+/g, ' ').trim().split(/\s+/)
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    if (parts[0]) return parts[0].slice(0, 2).toUpperCase()
+  }
+  return (ROLE_NAMES[role] || 'U').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+}
+
+export default function Layout() {
+  const { user, role, logout, switchRole } = useAuth()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const navigate = useNavigate()
+  const displayName = DEMO_USER_NAMES[user?.username] || user?.username || ROLE_NAMES[role] || 'User'
+  const initials = getInitials(user?.username, role)
+
+  const visibleNav = NAV.filter(n => n.roles.includes(role))
+
+  const handleLogout = () => { logout(); navigate('/login') }
+
+  return (
+    <div className="app-shell">
+      {/* Overlay for mobile */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
+      {/* SIDEBAR */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <span className="sidebar-logo-icon">🏥</span>
+            <div>
+              <div className="sidebar-title">SHMS</div>
+              <div className="sidebar-sub">Secure · v2.0</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="sidebar-user">
+          <div className="user-avatar">{initials}</div>
+          <div className="user-info">
+            <div className="user-name">{displayName}</div>
+            <div className="user-role-badge">{role?.toUpperCase()}</div>
+          </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="nav-section-label">// Navigation</div>
+          {visibleNav.map(n => (
+            <NavLink
+              key={n.path}
+              to={n.path}
+              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="nav-icon">{n.icon}</span>
+              <span>{n.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className="sidebar-logout" onClick={handleLogout}>
+            <span>⏻</span> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <div className="main-area">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button className="menu-toggle" onClick={() => setSidebarOpen(o => !o)}>☰</button>
+            <div className="topbar-brand">SHMS</div>
+          </div>
+          <div className="topbar-right">
+            {role !== 'patient' && (
+              <div className="role-switcher">
+                <span className="rs-label">Demo Role:</span>
+                <select value={role} onChange={e => switchRole(e.target.value)}>
+                  <option value="gp">GP</option>
+                  <option value="nurse">Nurse</option>
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Superadmin</option>
+                </select>
+              </div>
+            )}
+            <div className="topbar-user">{displayName}</div>
+          </div>
+        </header>
+
+        <main className="content-area">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}

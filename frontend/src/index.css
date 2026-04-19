@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
+
+:root {
+  --navy: #0f2342;
+  --navy2: #173461;
+  --navy3: #21477e;
+  --teal: #0f7f77;
+  --teal-light: #18a89d;
+  --blue: #1d4ed8;
+  --surface: #ffffff;
+  --surface2: #f4f7fb;
+  --surface3: #edf2f8;
+  --border: #d8e2ef;
+  --border2: #c2d0e2;
+  --text: #17253b;
+  --text2: #3b4f6b;
+  --text3: #6f83a0;
+  --green: #0f8f62;
+  --green-bg: #d5f5e8;
+  --amber: #a96a09;
+  --amber-bg: #fff1d6;
+  --red: #bd2f2f;
+  --red-bg: #ffe2e2;
+  --blue-bg: #dbe8ff;
+  --sidebar-w: 270px;
+  --topbar-h: 68px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(21, 42, 76, 0.09), 0 8px 20px rgba(21, 42, 76, 0.05);
+  --shadow-md: 0 10px 26px rgba(16, 40, 74, 0.1);
+  --shadow-lg: 0 24px 48px rgba(10, 24, 44, 0.16);
+  --ring: 0 0 0 4px rgba(24, 168, 157, 0.2);
+  --sans: 'Manrope', sans-serif;
+  --serif: 'Fraunces', serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--sans);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(24, 168, 157, 0.14), transparent 42%),
+    radial-gradient(circle at 88% 100%, rgba(29, 78, 216, 0.12), transparent 40%),
+    var(--surface2);
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+input,
+select,
+textarea {
+  font-family: var(--sans);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #bfd0e4;
+  border-radius: 999px;
+}
