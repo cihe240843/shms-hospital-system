@@ -156,6 +156,20 @@ FIELD_ENCRYPTION_KEY=<32-byte-fernet-key>
 
 If you do not set it, SHMS derives a development key from `SECRET_KEY`. For production, set a dedicated `FIELD_ENCRYPTION_KEY` and keep it stable across deployments, otherwise encrypted records cannot be read.
 
+### Rotate the encryption key
+
+1. Set `FIELD_ENCRYPTION_FALLBACK_KEYS` to the previous active key(s), comma-separated.
+2. Set `FIELD_ENCRYPTION_KEY` to the new primary key.
+3. Run the rotation command:
+
+```bash
+docker-compose exec backend python manage.py rotate_encryption_key
+```
+
+4. After the command finishes and records are re-saved under the new key, remove the old key(s) from `FIELD_ENCRYPTION_FALLBACK_KEYS`.
+
+During the rotation window, SHMS can still read records encrypted with old keys, but new writes use the current primary key.
+
 ---
 
 ## Service URLs

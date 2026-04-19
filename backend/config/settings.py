@@ -115,6 +115,7 @@ FIELD_ENCRYPTION_KEY = config(
     "FIELD_ENCRYPTION_KEY",
     default=base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode("utf-8")).digest()).decode("ascii"),
 )
+FIELD_ENCRYPTION_FALLBACK_KEYS = config("FIELD_ENCRYPTION_FALLBACK_KEYS", default="")
 
 # Authentication security (brute-force + MFA)
 AUTH_MAX_FAILED_ATTEMPTS = config("AUTH_MAX_FAILED_ATTEMPTS", default=5, cast=int)
