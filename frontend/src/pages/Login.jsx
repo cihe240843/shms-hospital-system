@@ -108,6 +108,7 @@ export default function Login({ audience = 'staff' }) {
                   <select value={mfaChannel} onChange={e => setMfaChannel(e.target.value)}>
                     <option value="email">Email OTP</option>
                     <option value="sms">SMS OTP</option>
+                    <option value="whatsapp">WhatsApp OTP</option>
                   </select>
                 </div>
               </>
@@ -115,7 +116,7 @@ export default function Login({ audience = 'staff' }) {
             {mfaStep && (
               <>
                 <div className="notice notice-success" style={{ marginBottom: 12 }}>
-                  MFA code sent via {activeMfaChannel === 'sms' ? 'SMS' : 'email'}.
+                  MFA code sent via {activeMfaChannel === 'sms' ? 'SMS' : activeMfaChannel === 'whatsapp' ? 'WhatsApp' : 'email'}.
                 </div>
                 <div className="lf-group">
                   <label>OTP Code</label>
@@ -143,7 +144,7 @@ export default function Login({ audience = 'staff' }) {
 
           <div className="quick-logins">
             <p className="ql-label">{isPatientPortal ? 'Patient Access' : 'Staff Access'}</p>
-            <div className="login-badge">Enter username/password, then verify email OTP.</div>
+            <div className="login-badge">Enter username/password, then verify OTP via Email, SMS, or WhatsApp.</div>
             <div className="portal-switch-link">
               {isPatientPortal ? (
                 <Link to="/staff-login">

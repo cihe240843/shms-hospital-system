@@ -74,6 +74,36 @@ def _send_mfa_sms(phone_number, otp, expires_minutes):
         return False, 'SMS provider is unreachable.'
 
 
+def _send_mfa_whatsapp(phone_number, otp, expires_minutes):
+    if not getattr(settings, 'WHATSAPP_MFA_ENABLED', False):
+        return False, 'WhatsApp MFA is not enabled by server configuration.'
+
+    provider_url = (getattr(settings, 'WHATSAPP_PROVIDER_URL', '') or '').strip()
+    if not provider_url:
+        return False, 'WhatsApp provider URL is not configured.'
+
+    api_key = (getattr(settings, 'WHATSAPP_PROVIDER_API_KEY', '') or '').strip()
+    sender_id = (getattr(settings, 'WHATSAPP_SENDER_ID', 'SHMS') or 'SHMS').strip()
+
+    payload = {
+        'to': phone_number,
+        'sender_id': sender_id,
+        'message': f'Your SHMS verification code is {otp}. It expires in {expires_minutes} minutes.',
+        'channel': 'whatsapp',
+    }
+    headers = {'Content-Type': 'application/json'}
+    if api_key:
+        headers['Authorization'] = f'Bearer {api_key}'
+
+    try:
+        resp = requests.post(provider_url, json=payload, headers=headers, timeout=8)
+        if 200 <= resp.status_code < 300:
+            return True, ''
+        return False, f'WhatsApp provider rejected request ({resp.status_code}).'
+    except requests.RequestException:
+        return False, 'WhatsApp provider is unreachable.'
+
+
 class LoginInitiateView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -86,8 +116,8 @@ class LoginInitiateView(APIView):
 
         if not username or not password:
             return Response({'detail': 'Username and password are required.'}, status=400)
-        if requested_channel not in ['email', 'sms']:
-            return Response({'detail': 'mfa_channel must be "email" or "sms".'}, status=400)
+        if requested_channel not in ['email', 'sms', 'whatsapp']:
+            return Response({'detail': 'mfa_channel must be "email", "sms" or "whatsapp".'}, status=400)
 
         user = User.objects.filter(username=username).first()
         state = None
@@ -130,11 +160,14 @@ class LoginInitiateView(APIView):
         expires_minutes = int(getattr(settings, 'AUTH_OTP_EXPIRY_MINUTES', 5))
 
         effective_channel = requested_channel
-        if effective_channel == 'sms':
+        if effective_channel in ['sms', 'whatsapp']:
             phone_number = _resolve_mfa_phone(authed_user)
             if not phone_number:
-                return Response({'detail': 'SMS MFA requires a configured mobile number.'}, status=400)
-            ok, reason = _send_mfa_sms(phone_number, otp, expires_minutes)
+                return Response({'detail': 'SMS/WhatsApp MFA requires a configured mobile number.'}, status=400)
+            if effective_channel == 'sms':
+                ok, reason = _send_mfa_sms(phone_number, otp, expires_minutes)
+            else:
+                ok, reason = _send_mfa_whatsapp(phone_number, otp, expires_minutes)
             if not ok:
                 return Response({'detail': reason}, status=400)
         else:

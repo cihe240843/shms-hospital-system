@@ -130,3 +130,9 @@ SMS_MFA_ENABLED = config("SMS_MFA_ENABLED", default=False, cast=bool)
 SMS_PROVIDER_URL = config("SMS_PROVIDER_URL", default="")
 SMS_PROVIDER_API_KEY = config("SMS_PROVIDER_API_KEY", default="")
 SMS_SENDER_ID = config("SMS_SENDER_ID", default="SHMS")
+
+# Optional WhatsApp MFA provider settings
+WHATSAPP_MFA_ENABLED = config("WHATSAPP_MFA_ENABLED", default=False, cast=bool)
+WHATSAPP_PROVIDER_URL = config("WHATSAPP_PROVIDER_URL", default="")
+WHATSAPP_PROVIDER_API_KEY = config("WHATSAPP_PROVIDER_API_KEY", default="")
+WHATSAPP_SENDER_ID = config("WHATSAPP_SENDER_ID", default="SHMS")
