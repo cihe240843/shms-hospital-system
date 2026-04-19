@@ -147,14 +147,16 @@ export default function PatientPortal() {
     }
   }
 
-  const downloadInvoice = async (id) => {
+  const downloadInvoice = async (id, format = 'txt') => {
     resetMessages()
     try {
-      const res = await api.get(`/api/billing/${id}/download/`, { responseType: 'blob' })
-      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'text/plain' }))
+      const res = await api.get(`/api/billing/${id}/download/?file_type=${format}`, { responseType: 'blob' })
+      const contentType = res.headers?.['content-type'] || 'application/octet-stream'
+      const extension = format === 'pdf' ? 'pdf' : format === 'docx' ? 'docx' : 'txt'
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: contentType }))
       const link = document.createElement('a')
       link.href = blobUrl
-      link.download = `invoice-${id}.txt`
+      link.download = `invoice-${id}.${extension}`
       document.body.appendChild(link)
       link.click()
       link.remove()
@@ -279,7 +281,8 @@ export default function PatientPortal() {
                   <td>
                     <div className="portal-inline-actions compact">
                       <button className="act-btn act-view" onClick={() => openInvoice(i.id)}>View</button>
-                      <button className="act-btn" onClick={() => downloadInvoice(i.id)}>Download</button>
+                      <button className="act-btn" onClick={() => downloadInvoice(i.id, 'pdf')}>PDF</button>
+                      <button className="act-btn" onClick={() => downloadInvoice(i.id, 'docx')}>Word</button>
                       {i.status === 'unpaid' ? <button className="act-btn act-edit" onClick={() => payInvoice(i.id)}>Pay Now</button> : null}
                     </div>
                   </td>
