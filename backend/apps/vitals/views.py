@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
+from apps.common.fhir_client import sync_vitals, FHIRSyncError
 from .models import VitalObservation
 from .serializers import VitalObservationSerializer
 
@@ -45,4 +46,20 @@ class VitalObservationViewSet(viewsets.ModelViewSet):
         role = infer_role(self.request.user)
         if role not in ["nurse", "superadmin"]:
             raise PermissionDenied("Only nurse or superadmin can record vitals.")
-        serializer.save(recorded_by=self.request.user)
+        vital = serializer.save(recorded_by=self.request.user)
+        try:
+            sync_vitals(vital)
+        except FHIRSyncError:
+            # Keep local vitals workflow available even if HAPI is temporarily unavailable.
+            pass
+
+    def perform_update(self, serializer):
+        role = infer_role(self.request.user)
+        if role not in ["nurse", "superadmin"]:
+            raise PermissionDenied("Only nurse or superadmin can update vitals.")
+        vital = serializer.save()
+        try:
+            sync_vitals(vital)
+        except FHIRSyncError:
+            # Keep local vitals workflow available even if HAPI is temporarily unavailable.
+            pass
