@@ -13,6 +13,26 @@ from rest_framework.views import APIView
 from .models import AuditLog, LoginSecurityState, MFAChallenge, AccountUnlockToken
 from .serializers import AuditLogSerializer
 
+
+def _client_ip(request):
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
+
+def _audit_event(user, action, resource, resource_id, request=None):
+    try:
+        AuditLog.objects.create(
+            user=user,
+            action=action,
+            resource=resource,
+            resource_id=resource_id,
+            ip_address=_client_ip(request) if request else None,
+        )
+    except Exception:
+        pass
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all()
     serializer_class = AuditLogSerializer
@@ -315,6 +335,14 @@ If you did not request this, please ignore this email.
                 fail_silently=False,
             )
 
+            _audit_event(
+                request.user,
+                "UNLOCK_REQ_PATIENT",
+                "auth",
+                target_user.username,
+                request,
+            )
+
             return Response(
                 {
                     "detail": "Verification email sent to patient.",
@@ -328,6 +356,14 @@ If you did not request this, please ignore this email.
             state.failed_attempts = 0
             state.locked_until = None
             state.save(update_fields=["failed_attempts", "locked_until", "updated_at"])
+
+            _audit_event(
+                request.user,
+                "UNLOCK_DONE_STAFF",
+                "auth",
+                target_user.username,
+                request,
+            )
 
             return Response(
                 {
@@ -388,6 +424,14 @@ class VerifyUnlockTokenView(APIView):
             state.failed_attempts = 0
             state.locked_until = None
             state.save(update_fields=["failed_attempts", "locked_until", "updated_at"])
+
+        _audit_event(
+            user,
+            "UNLOCK_DONE_PATIENT",
+            "auth",
+            user.username,
+            request,
+        )
 
         return Response(
             {
