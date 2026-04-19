@@ -72,8 +72,8 @@ export function AuthProvider({ children }) {
     return userObj
   }
 
-  const initiateLogin = async (username, password) => {
-    const { data } = await axios.post(`${BASE}/api/auth/login/initiate/`, { username, password })
+  const initiateLogin = async (username, password, mfaChannel = 'email') => {
+    const { data } = await axios.post(`${BASE}/api/auth/login/initiate/`, { username, password, mfa_channel: mfaChannel })
     return data
   }
 

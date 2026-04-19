@@ -124,3 +124,9 @@ AUTH_MAX_FAILED_ATTEMPTS = config("AUTH_MAX_FAILED_ATTEMPTS", default=5, cast=in
 AUTH_LOCKOUT_MINUTES = config("AUTH_LOCKOUT_MINUTES", default=15, cast=int)
 AUTH_OTP_EXPIRY_MINUTES = config("AUTH_OTP_EXPIRY_MINUTES", default=5, cast=int)
 AUTH_OTP_LENGTH = config("AUTH_OTP_LENGTH", default=6, cast=int)
+
+# Optional SMS MFA provider settings
+SMS_MFA_ENABLED = config("SMS_MFA_ENABLED", default=False, cast=bool)
+SMS_PROVIDER_URL = config("SMS_PROVIDER_URL", default="")
+SMS_PROVIDER_API_KEY = config("SMS_PROVIDER_API_KEY", default="")
+SMS_SENDER_ID = config("SMS_SENDER_ID", default="SHMS")

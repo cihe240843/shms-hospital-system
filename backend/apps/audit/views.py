@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.mail import send_mail
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
@@ -40,6 +40,49 @@ def _resolve_frontend_base_url(request):
     if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
         return origin
     return configured
+
+
+def _detect_log_anomalies(recent_logs):
+    anomalies = []
+
+    per_user_fails = (
+        recent_logs.filter(action__in=["LOGIN_FAIL", "LOGIN_MFA_FAIL", "LOGIN_LOCKED"])
+        .values("user_id", "user__username")
+        .annotate(total=Count("id"))
+        .order_by("-total")
+    )
+    for row in per_user_fails[:10]:
+        if row["total"] >= 6:
+            anomalies.append(
+                {
+                    "type": "USER_LOGIN_FAILURE_SPIKE",
+                    "subject": row.get("user__username") or "unknown",
+                    "score": row["total"],
+                    "severity": "high" if row["total"] >= 10 else "medium",
+                    "description": f"{row['total']} failed/locked login events in last 24h.",
+                }
+            )
+
+    per_ip_events = (
+        recent_logs.exclude(ip_address__isnull=True)
+        .exclude(ip_address="")
+        .values("ip_address")
+        .annotate(total=Count("id"), fails=Count("id", filter=Q(action__in=["LOGIN_FAIL", "LOGIN_MFA_FAIL", "LOGIN_LOCKED"])))
+        .order_by("-total")
+    )
+    for row in per_ip_events[:10]:
+        if row["fails"] >= 8 or row["total"] >= 60:
+            anomalies.append(
+                {
+                    "type": "IP_ACTIVITY_ANOMALY",
+                    "subject": row["ip_address"],
+                    "score": row["fails"],
+                    "severity": "high" if row["fails"] >= 12 else "medium",
+                    "description": f"{row['fails']} failed auth events ({row['total']} total events) from same IP in last 24h.",
+                }
+            )
+
+    return anomalies
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all()
@@ -108,6 +151,7 @@ class SecurityAnalysisView(APIView):
             )
 
         status = "PASS" if login_fails == 0 and login_locked == 0 and len(locked_accounts) == 0 else "REVIEW"
+        anomalies = _detect_log_anomalies(recent_logs)
         return Response(
             {
                 "status": status,
@@ -124,6 +168,28 @@ class SecurityAnalysisView(APIView):
                 "suspicious_users": suspicious_users,
                 "top_ips": list(top_ips),
                 "locked_accounts_list": locked_accounts,
+                "anomalies": anomalies,
+            }
+        )
+
+
+class LogAnomalyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        role = UserManagementView.infer_role(request.user)
+        if role not in ["admin", "superadmin"]:
+            return Response({"detail": "Only admin/superadmin can view anomaly analysis."}, status=403)
+
+        since = timezone.now() - timedelta(hours=24)
+        recent_logs = AuditLog.objects.filter(timestamp__gte=since)
+        anomalies = _detect_log_anomalies(recent_logs)
+        return Response(
+            {
+                "window_hours": 24,
+                "total_events": recent_logs.count(),
+                "anomaly_count": len(anomalies),
+                "anomalies": anomalies,
             }
         )
 

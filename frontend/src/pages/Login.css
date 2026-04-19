@@ -229,11 +229,32 @@
 	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.login-form select {
+	width: 100%;
+	padding: 11px 14px;
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: var(--radius);
+	color: #fff;
+	font-size: 14px;
+	outline: none;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form select option {
+	color: #0f172a;
+}
+
 .login-form input::placeholder {
 	color: rgba(255, 255, 255, 0.45);
 }
 
 .login-form input:focus {
+	border-color: #9af5ec;
+	box-shadow: 0 0 0 4px rgba(154, 245, 236, 0.17);
+}
+
+.login-form select:focus {
 	border-color: #9af5ec;
 	box-shadow: 0 0 0 4px rgba(154, 245, 236, 0.17);
 }

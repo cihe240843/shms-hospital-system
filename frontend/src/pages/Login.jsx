@@ -7,6 +7,8 @@ export default function Login({ audience = 'staff' }) {
   const isPatientPortal = audience === 'patient'
   const [username, setUsername] = useState(isPatientPortal ? '' : 'dr.smith')
   const [password, setPassword]   = useState(isPatientPortal ? '' : 'password123')
+  const [mfaChannel, setMfaChannel] = useState('email')
+  const [activeMfaChannel, setActiveMfaChannel] = useState('email')
   const [otp, setOtp] = useState('')
   const [challengeToken, setChallengeToken] = useState('')
   const [mfaStep, setMfaStep] = useState(false)
@@ -21,8 +23,9 @@ export default function Login({ audience = 'staff' }) {
     setLoading(true)
     try {
       if (!mfaStep) {
-        const data = await initiateLogin(username, password)
+        const data = await initiateLogin(username, password, mfaChannel)
         setChallengeToken(data.challenge_token)
+        setActiveMfaChannel(data.mfa_channel || mfaChannel)
         setMfaStep(true)
       } else {
         const user = await verifyLogin(username, challengeToken, otp)
@@ -100,12 +103,19 @@ export default function Login({ audience = 'staff' }) {
                   <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
                     placeholder="••••••••" required />
                 </div>
+                <div className="lf-group">
+                  <label>MFA Channel</label>
+                  <select value={mfaChannel} onChange={e => setMfaChannel(e.target.value)}>
+                    <option value="email">Email OTP</option>
+                    <option value="sms">SMS OTP</option>
+                  </select>
+                </div>
               </>
             )}
             {mfaStep && (
               <>
                 <div className="notice notice-success" style={{ marginBottom: 12 }}>
-                  MFA code sent to your registered email.
+                  MFA code sent via {activeMfaChannel === 'sms' ? 'SMS' : 'email'}.
                 </div>
                 <div className="lf-group">
                   <label>OTP Code</label>

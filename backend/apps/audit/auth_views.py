@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 from datetime import timedelta
+import requests
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -38,6 +39,41 @@ def _audit(user, action, resource, resource_id, ip):
         pass
 
 
+def _resolve_mfa_phone(user):
+    if hasattr(user, 'patient_profile') and user.patient_profile is not None:
+        return (user.patient_profile.phone or '').strip()
+    return ''
+
+
+def _send_mfa_sms(phone_number, otp, expires_minutes):
+    if not getattr(settings, 'SMS_MFA_ENABLED', False):
+        return False, 'SMS MFA is not enabled by server configuration.'
+
+    provider_url = (getattr(settings, 'SMS_PROVIDER_URL', '') or '').strip()
+    if not provider_url:
+        return False, 'SMS provider URL is not configured.'
+
+    api_key = (getattr(settings, 'SMS_PROVIDER_API_KEY', '') or '').strip()
+    sender_id = (getattr(settings, 'SMS_SENDER_ID', 'SHMS') or 'SHMS').strip()
+
+    payload = {
+        'to': phone_number,
+        'sender_id': sender_id,
+        'message': f'Your SHMS verification code is {otp}. It expires in {expires_minutes} minutes.',
+    }
+    headers = {'Content-Type': 'application/json'}
+    if api_key:
+        headers['Authorization'] = f'Bearer {api_key}'
+
+    try:
+        resp = requests.post(provider_url, json=payload, headers=headers, timeout=8)
+        if 200 <= resp.status_code < 300:
+            return True, ''
+        return False, f'SMS provider rejected request ({resp.status_code}).'
+    except requests.RequestException:
+        return False, 'SMS provider is unreachable.'
+
+
 class LoginInitiateView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -45,10 +81,13 @@ class LoginInitiateView(APIView):
     def post(self, request):
         username = (request.data.get('username') or '').strip()
         password = request.data.get('password') or ''
+        requested_channel = (request.data.get('mfa_channel') or 'email').strip().lower()
         ip = _client_ip(request)
 
         if not username or not password:
             return Response({'detail': 'Username and password are required.'}, status=400)
+        if requested_channel not in ['email', 'sms']:
+            return Response({'detail': 'mfa_channel must be "email" or "sms".'}, status=400)
 
         user = User.objects.filter(username=username).first()
         state = None
@@ -85,13 +124,29 @@ class LoginInitiateView(APIView):
         state.locked_until = None
         state.save(update_fields=['failed_attempts', 'locked_until', 'updated_at'])
 
-        if not authed_user.email:
-            return Response({'detail': 'Email is not configured for MFA.'}, status=400)
-
         otp_length = int(getattr(settings, 'AUTH_OTP_LENGTH', 6))
         otp = ''.join(str(secrets.randbelow(10)) for _ in range(otp_length))
         challenge_token = secrets.token_urlsafe(32)
         expires_minutes = int(getattr(settings, 'AUTH_OTP_EXPIRY_MINUTES', 5))
+
+        effective_channel = requested_channel
+        if effective_channel == 'sms':
+            phone_number = _resolve_mfa_phone(authed_user)
+            if not phone_number:
+                return Response({'detail': 'SMS MFA requires a configured mobile number.'}, status=400)
+            ok, reason = _send_mfa_sms(phone_number, otp, expires_minutes)
+            if not ok:
+                return Response({'detail': reason}, status=400)
+        else:
+            if not authed_user.email:
+                return Response({'detail': 'Email is not configured for MFA.'}, status=400)
+            send_mail(
+                subject='Your SHMS MFA code',
+                message=f'Your verification code is: {otp}. It expires in {expires_minutes} minutes.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[authed_user.email],
+                fail_silently=False,
+            )
 
         MFAChallenge.objects.create(
             user=authed_user,
@@ -101,16 +156,8 @@ class LoginInitiateView(APIView):
             expires_at=timezone.now() + timedelta(minutes=expires_minutes),
         )
 
-        send_mail(
-            subject='Your SHMS MFA code',
-            message=f'Your verification code is: {otp}. It expires in {expires_minutes} minutes.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[authed_user.email],
-            fail_silently=False,
-        )
-
         _audit(authed_user, 'LOGIN_MFA_SENT', 'auth', username, ip)
-        return Response({'status': 'mfa_required', 'challenge_token': challenge_token, 'expires_in': expires_minutes * 60})
+        return Response({'status': 'mfa_required', 'mfa_channel': effective_channel, 'challenge_token': challenge_token, 'expires_in': expires_minutes * 60})
 
 
 class LoginVerifyView(APIView):
