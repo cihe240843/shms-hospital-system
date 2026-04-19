@@ -1,5 +1,6 @@
 import hashlib
 from django.db import models
+from django.db import connection, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 
@@ -19,12 +20,19 @@ class AuditLog(models.Model):
     def save(self, *args, **kwargs):
         if self.pk:
             raise Exception("AuditLog is append-only")
-        last = AuditLog.objects.order_by("-id").first()
-        prev = last.row_hash if last else "0" * 64
-        self.prev_hash = prev
-        data = f"{self.user_id}{self.action}{self.resource}{self.resource_id}{self.ip_address}{prev}"
-        self.row_hash = hashlib.sha256(data.encode()).hexdigest()
-        super().save(*args, **kwargs)
+
+        # Serialize chain writes to avoid concurrent requests branching the hash chain.
+        with transaction.atomic():
+            if connection.vendor == "postgresql":
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT pg_advisory_xact_lock(%s)", [947314])
+
+            last = AuditLog.objects.order_by("-id").first()
+            prev = last.row_hash if last else "0" * 64
+            self.prev_hash = prev
+            data = f"{self.user_id}{self.action}{self.resource}{self.resource_id}{self.ip_address}{prev}"
+            self.row_hash = hashlib.sha256(data.encode()).hexdigest()
+            super().save(*args, **kwargs)
 
 
 class LoginSecurityState(models.Model):

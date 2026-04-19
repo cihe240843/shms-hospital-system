@@ -4,6 +4,8 @@ import { Badge, PageHeader, Spinner, Modal, FormGroup, Input, Select, BtnPrimary
 import '../components/ui.css'
 import './AdminPanel.css'
 
+const STAFF_ROLES = new Set(['gp', 'nurse', 'admin', 'superadmin'])
+
 const EMPTY_USER = {
   username: '',
   first_name: '',
@@ -54,7 +56,8 @@ export default function AdminPanel() {
 
   const loadUsers = async () => {
     const { data } = await api.get('/api/audit/users/')
-    setUsers(Array.isArray(data) ? data : [])
+    const allUsers = Array.isArray(data) ? data : []
+    setUsers(allUsers.filter(u => STAFF_ROLES.has((u.role || '').toLowerCase())))
   }
 
   const loadPatients = async () => {
