@@ -51,7 +51,11 @@ export default function Layout() {
 
   const visibleNav = NAV.filter(n => n.roles.includes(role))
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => {
+    const loginPath = role === 'patient' ? '/patient-login' : '/staff-login'
+    logout()
+    navigate(loginPath)
+  }
 
   return (
     <div className="app-shell">

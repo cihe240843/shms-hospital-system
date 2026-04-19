@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import Login from './pages/Login'
+import StaffLogin from './pages/StaffLogin'
+import PatientLogin from './pages/PatientLogin'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Patients from './pages/Patients'
@@ -28,7 +29,7 @@ const PAGE_ROLES = {
 
 function ProtectedRoute({ page, children }) {
   const { user, role } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/staff-login" replace />
   const allowed = PAGE_ROLES[page]
   if (allowed && !allowed.includes(role)) {
     return <Navigate to={role === 'patient' ? '/portal' : '/dashboard'} replace />
@@ -38,14 +39,18 @@ function ProtectedRoute({ page, children }) {
 
 function AppRoutes() {
   const { user, role } = useAuth()
+  const postLoginDefault = user ? (role === 'patient' ? '/portal' : '/dashboard') : '/staff-login'
+
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+      <Route path="/login" element={<Navigate to="/staff-login" replace />} />
+      <Route path="/staff-login" element={!user ? <StaffLogin /> : <Navigate to={postLoginDefault} replace />} />
+      <Route path="/patient-login" element={!user ? <PatientLogin /> : <Navigate to={postLoginDefault} replace />} />
       <Route path="/activate" element={<ActivateAccount />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/unlock-account" element={<UnlockAccount />} />
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+      <Route path="/" element={<Navigate to={postLoginDefault} replace />} />
       <Route element={<Layout />}>
         <Route path="/dashboard"   element={<ProtectedRoute page="dashboard">{role === 'patient' ? <Navigate to="/portal" /> : <Dashboard />}</ProtectedRoute>} />
         <Route path="/portal"      element={<ProtectedRoute page="portal"><PatientPortal /></ProtectedRoute>} />

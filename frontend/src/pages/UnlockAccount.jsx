@@ -40,7 +40,7 @@ export default function UnlockAccount() {
       })
       setSuccessMsg('Your account has been unlocked successfully!')
       setVerified(true)
-      setTimeout(() => navigate('/login'), 2000)
+      setTimeout(() => navigate('/patient-login'), 2000)
     } catch (e) {
       const detail = e.response?.data?.detail || 'Unable to unlock account. Please try again.'
       setErrorMsg(detail)
@@ -118,7 +118,7 @@ export default function UnlockAccount() {
 
             <div className="login-footer">
               <p>Didn't request this? Your account is still locked and can only be unlocked by our support team.</p>
-              <a href="/login" className="login-link">Back to Login</a>
+              <a href="/patient-login" className="login-link">Back to Patient Login</a>
             </div>
           </form>
         </div>

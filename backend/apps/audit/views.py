@@ -33,6 +33,14 @@ def _audit_event(user, action, resource, resource_id, request=None):
     except Exception:
         pass
 
+
+def _resolve_frontend_base_url(request):
+    configured = (getattr(settings, "FRONTEND_URL", "http://localhost:5173") or "").rstrip("/")
+    origin = ((request.headers.get("Origin") if request else "") or "").rstrip("/")
+    if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
+        return origin
+    return configured
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all()
     serializer_class = AuditLogSerializer
@@ -319,7 +327,8 @@ class UnlockAccountRequestView(APIView):
                 expires_at=timezone.now() + timedelta(minutes=unlock_window_minutes),
             )
 
-            unlock_link = f"{getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5173')}/unlock-account?token={token}&user={user_id}"
+            frontend_base = _resolve_frontend_base_url(request)
+            unlock_link = f"{frontend_base}/unlock-account?token={token}&user={user_id}"
 
             send_mail(
                 subject="Account Unlock Request",
@@ -545,10 +554,8 @@ class ResendUnlockTokenView(APIView):
             expires_at=timezone.now() + timedelta(minutes=unlock_window_minutes),
         )
 
-        unlock_link = (
-            f"{getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5173')}"
-            f"/unlock-account?token={token}&user={target_user.id}"
-        )
+        frontend_base = _resolve_frontend_base_url(request)
+        unlock_link = f"{frontend_base}/unlock-account?token={token}&user={target_user.id}"
 
         send_mail(
             subject="Account Unlock Request (Resent)",

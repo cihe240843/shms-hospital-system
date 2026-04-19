@@ -116,12 +116,14 @@ class PatientViewSet(viewsets.ModelViewSet):
 
         frontend_base = resolve_frontend_base_url(request)
         invite_link = f"{frontend_base}/activate?token={token}"
+        patient_login_link = f"{frontend_base}/patient-login"
         send_mail(
             subject="Activate your SHMS patient account",
             message=(
                 f"Hello {patient.first_name},\n\n"
                 "Your patient account invitation is ready.\n"
                 f"Activate here: {invite_link}\n\n"
+                f"Patient login: {patient_login_link}\n\n"
                 "This link expires in 48 hours."
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,
@@ -199,12 +201,14 @@ class PatientViewSet(viewsets.ModelViewSet):
 
         frontend_base = resolve_frontend_base_url(request)
         reset_link = f"{frontend_base}/reset-password?token={token}"
+        patient_login_link = f"{frontend_base}/patient-login"
         send_mail(
             subject="Reset your SHMS patient password",
             message=(
                 f"Hello {patient.first_name},\n\n"
                 "You requested a password reset for your patient account.\n"
                 f"Reset here: {reset_link}\n\n"
+                f"Patient login: {patient_login_link}\n\n"
                 "This link expires in 2 hours."
             ),
             from_email=settings.DEFAULT_FROM_EMAIL,

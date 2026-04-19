@@ -37,7 +37,7 @@ export default function ActivateAccount() {
     try {
       await api.post('/api/patients/activate/', { token, username, password })
       setSuccessMsg('Account activated successfully. You can now sign in.')
-      setTimeout(() => navigate('/login'), 1200)
+      setTimeout(() => navigate('/patient-login'), 1200)
     } catch (e) {
       setErrorMsg(e.response?.data?.detail || 'Unable to activate account.')
     } finally {

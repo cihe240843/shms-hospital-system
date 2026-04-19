@@ -36,7 +36,7 @@ export default function ResetPassword() {
     try {
       await api.post('/api/patients/reset-password/', { token, password })
       setSuccessMsg('Password reset successful. Redirecting to login...')
-      setTimeout(() => navigate('/login'), 1200)
+      setTimeout(() => navigate('/patient-login'), 1200)
     } catch (e) {
       setErrorMsg(e.response?.data?.detail || 'Unable to reset password.')
     } finally {

@@ -25,7 +25,7 @@ api.interceptors.response.use(
           return api(original)
         } catch {
           localStorage.clear()
-          window.location.href = '/login'
+          window.location.href = '/staff-login'
         }
       }
     }
