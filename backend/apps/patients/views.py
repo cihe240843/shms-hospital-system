@@ -37,6 +37,16 @@ def hash_token(token):
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def resolve_frontend_base_url(request):
+    configured = (settings.FRONTEND_URL or "").rstrip("/")
+    origin = (request.headers.get("Origin") or "").rstrip("/")
+
+    # In local development, prefer the active frontend dev-server origin.
+    if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
+        return origin
+    return configured
+
+
 class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
     serializer_class = PatientSerializer
@@ -82,7 +92,8 @@ class PatientViewSet(viewsets.ModelViewSet):
         patient.invitation_expires_at = now + timedelta(hours=48)
         patient.save(update_fields=["invitation_token", "invitation_sent_at", "invitation_expires_at"])
 
-        invite_link = f"{settings.FRONTEND_URL}/activate?token={token}"
+        frontend_base = resolve_frontend_base_url(request)
+        invite_link = f"{frontend_base}/activate?token={token}"
         send_mail(
             subject="Activate your SHMS patient account",
             message=(
@@ -164,7 +175,8 @@ class PatientViewSet(viewsets.ModelViewSet):
         patient.password_reset_expires_at = now + timedelta(hours=2)
         patient.save(update_fields=["password_reset_token", "password_reset_sent_at", "password_reset_expires_at"])
 
-        reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+        frontend_base = resolve_frontend_base_url(request)
+        reset_link = f"{frontend_base}/reset-password?token={token}"
         send_mail(
             subject="Reset your SHMS patient password",
             message=(

@@ -2,7 +2,7 @@
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	margin-bottom: 24px;
+	margin-bottom: 26px;
 	gap: 16px;
 	flex-wrap: wrap;
 	width: 100%;
@@ -16,16 +16,18 @@
 
 .page-title {
 	font-family: var(--serif);
-	font-size: 31px;
+	font-size: 34px;
 	color: var(--text);
 	line-height: 1.1;
+	letter-spacing: 0.2px;
 }
 
 .page-desc {
-	font-size: 13px;
+	font-size: 14px;
 	color: var(--text3);
-	margin-top: 6px;
+	margin-top: 8px;
 	max-width: 620px;
+	line-height: 1.5;
 }
 
 .card {
@@ -34,6 +36,13 @@
 	border: 1px solid var(--border);
 	box-shadow: var(--shadow);
 	padding: 24px;
+}
+
+.card > h3 {
+	font-size: 18px;
+	font-weight: 800;
+	color: var(--navy);
+	margin-bottom: 12px;
 }
 
 .badge {
@@ -93,10 +102,12 @@
 
 .form-group label {
 	display: block;
-	font-size: 12px;
+	font-size: 11px;
 	font-weight: 700;
 	color: var(--text2);
 	margin-bottom: 6px;
+	text-transform: uppercase;
+	letter-spacing: 0.55px;
 }
 
 .form-control {
@@ -129,12 +140,14 @@ textarea.form-control {
 
 .btn-primary,
 .btn-secondary {
-	padding: 10px 18px;
+	padding: 10px 16px;
 	border-radius: var(--radius);
-	font-size: 13px;
+	font-size: 12px;
 	font-weight: 700;
 	transition: all 0.18s ease;
 	white-space: nowrap;
+	letter-spacing: 0.25px;
+	text-transform: uppercase;
 }
 
 .btn-primary {
@@ -256,12 +269,12 @@ textarea.form-control {
 .data-table {
 	width: 100%;
 	border-collapse: collapse;
-	min-width: 620px;
+	min-width: 700px;
 }
 
 .data-table th {
 	background: linear-gradient(180deg, #f8fbff, #f2f7fd);
-	padding: 12px 16px;
+	padding: 13px 16px;
 	font-size: 11px;
 	font-weight: 800;
 	text-transform: uppercase;
@@ -270,13 +283,17 @@ textarea.form-control {
 	text-align: left;
 	border-bottom: 1px solid var(--border);
 	white-space: nowrap;
+	position: sticky;
+	top: 0;
+	z-index: 2;
 }
 
 .data-table td {
-	padding: 12px 16px;
+	padding: 14px 16px;
 	font-size: 13px;
 	border-bottom: 1px solid var(--border);
 	color: var(--text);
+	vertical-align: middle;
 }
 
 .data-table tr:last-child td {
@@ -287,19 +304,25 @@ textarea.form-control {
 	background: #f7fbff;
 }
 
+.data-table tbody tr:nth-child(even) td {
+	background: #fcfeff;
+}
+
 .action-btns {
 	display: flex;
 	gap: 6px;
 }
 
 .act-btn {
-	padding: 5px 10px;
+	padding: 6px 10px;
 	border-radius: 8px;
 	font-size: 11px;
 	font-weight: 700;
 	border: 1px solid;
 	transition: all 0.16s ease;
 	white-space: nowrap;
+	text-transform: uppercase;
+	letter-spacing: 0.25px;
 }
 
 .act-view {
@@ -342,6 +365,10 @@ textarea.form-control {
 	gap: 12px;
 	margin-bottom: 16px;
 	flex-wrap: wrap;
+}
+
+.table-toolbar .form-control {
+	max-width: 320px;
 }
 
 .metrics-grid {

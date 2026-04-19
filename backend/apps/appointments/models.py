@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from apps.patients.models import Patient
+from apps.common.fields import EncryptedTextField
 
 class Appointment(models.Model):
     STATUS_CHOICES = [("booked","Booked"),("done","Done"),("cancelled","Cancelled")]
@@ -11,7 +12,7 @@ class Appointment(models.Model):
     scheduled_at = models.DateTimeField()
     appointment_type = models.CharField(max_length=100, default="GP Consult")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="booked")
-    notes = models.TextField(blank=True)
+    notes = EncryptedTextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

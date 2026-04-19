@@ -56,3 +56,7 @@
 .patients-table-wrap {
   border-top: 4px solid rgba(24, 168, 157, 0.35);
 }
+
+.patients-page .page-desc {
+  max-width: 720px;
+}

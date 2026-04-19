@@ -144,6 +144,20 @@ docker-compose restart backend
 
 ---
 
+## Encrypt Sensitive Data At Rest
+
+SHMS encrypts selected patient and clinical text fields at the application layer using a field encryption key.
+
+Add this to `.env`:
+
+```bash
+FIELD_ENCRYPTION_KEY=<32-byte-fernet-key>
+```
+
+If you do not set it, SHMS derives a development key from `SECRET_KEY`. For production, set a dedicated `FIELD_ENCRYPTION_KEY` and keep it stable across deployments, otherwise encrypted records cannot be read.
+
+---
+
 ## Service URLs
 
 | Service   | URL                          | Login              |

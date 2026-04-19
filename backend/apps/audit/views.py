@@ -1,10 +1,13 @@
 import hashlib
+from datetime import timedelta
 from django.contrib.auth.models import Group, User
+from django.db.models import Count
+from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import AuditLog
+from .models import AuditLog, LoginSecurityState, MFAChallenge
 from .serializers import AuditLogSerializer
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -23,6 +26,73 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
                 return Response({"status": "TAMPERED", "row_id": log.id})
             prev = log.row_hash
         return Response({"status": "PASS", "total_entries": logs.count()})
+
+
+class SecurityAnalysisView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        since = timezone.now() - timedelta(hours=24)
+        recent_logs = AuditLog.objects.filter(timestamp__gte=since)
+        recent_events = recent_logs.count()
+        login_fails = recent_logs.filter(action="LOGIN_FAIL").count()
+        login_locked = recent_logs.filter(action="LOGIN_LOCKED").count()
+        login_success = recent_logs.filter(action="LOGIN_SUCCESS").count()
+        mfa_fails = recent_logs.filter(action="LOGIN_MFA_FAIL").count()
+        active_mfa = MFAChallenge.objects.filter(used_at__isnull=True, expires_at__gte=timezone.now()).count()
+
+        suspicious_users = []
+        fail_rows = (
+            recent_logs.filter(action__in=["LOGIN_FAIL", "LOGIN_LOCKED", "LOGIN_MFA_FAIL"])
+            .values("user_id", "user__username")
+            .annotate(failures=Count("id"))
+            .order_by("-failures", "user__username")
+        )
+        for row in fail_rows[:10]:
+            suspicious_users.append(
+                {
+                    "username": row.get("user__username") or "system",
+                    "failures": row["failures"],
+                    "risk": "HIGH" if row["failures"] >= 5 else "MEDIUM" if row["failures"] >= 3 else "LOW",
+                }
+            )
+
+        top_ips = (
+            recent_logs.exclude(ip_address__isnull=True)
+            .values("ip_address")
+            .annotate(events=Count("id"))
+            .order_by("-events", "ip_address")[:10]
+        )
+
+        locked_accounts = []
+        for state in LoginSecurityState.objects.select_related("user").filter(locked_until__gt=timezone.now()).order_by("-locked_until"):
+            locked_accounts.append(
+                {
+                    "username": state.user.username,
+                    "locked_until": state.locked_until,
+                    "failed_attempts": state.failed_attempts,
+                }
+            )
+
+        status = "PASS" if login_fails == 0 and login_locked == 0 and len(locked_accounts) == 0 else "REVIEW"
+        return Response(
+            {
+                "status": status,
+                "window_hours": 24,
+                "totals": {
+                    "events": recent_events,
+                    "login_success": login_success,
+                    "login_fail": login_fails,
+                    "login_locked": login_locked,
+                    "mfa_fail": mfa_fails,
+                    "active_mfa": active_mfa,
+                    "locked_accounts": len(locked_accounts),
+                },
+                "suspicious_users": suspicious_users,
+                "top_ips": list(top_ips),
+                "locked_accounts_list": locked_accounts,
+            }
+        )
 
 
 class UserManagementView(APIView):

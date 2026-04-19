@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, User
 from apps.patients.models import Patient
@@ -22,14 +23,17 @@ class Command(BaseCommand):
             "admin.lee": "admin",
             "superadmin": "superadmin",
         }
+        demo_mfa_email = getattr(settings, "DEMO_MFA_EMAIL", "testusers843@gmail.com")
         for username, last, first, pw in users:
             if not User.objects.filter(username=username).exists():
                 u = User.objects.create_user(username=username, password=pw,
                     first_name=first, last_name=last,
-                    email=f"{username}@hospital.com")
+                    email=demo_mfa_email)
                 self.stdout.write(f"Created user: {username}")
             else:
                 u = User.objects.get(username=username)
+                u.email = demo_mfa_email
+                u.save(update_fields=["email"])
 
             role = roles.get(username, "gp")
             group, _ = Group.objects.get_or_create(name=role)

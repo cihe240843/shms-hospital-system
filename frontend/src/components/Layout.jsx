@@ -8,19 +8,29 @@ const NAV = [
   { path:'/portal',       icon:'🧾', label:'My Portal',    roles:['patient'] },
   { path:'/patients',     icon:'👤', label:'Patients',     roles:['gp','nurse','admin','superadmin'] },
   { path:'/appointments', icon:'📅', label:'Appointments', roles:['gp','nurse','admin','superadmin'] },
-  { path:'/vitals',       icon:'💓', label:'Vitals Entry', roles:['nurse','superadmin'] },
+  { path:'/vitals',       icon:'💓', label:'Vitals', roles:['gp','nurse','superadmin'] },
   { path:'/billing',      icon:'💳', label:'Billing',      roles:['admin','superadmin'] },
   { path:'/inventory',    icon:'📦', label:'Inventory',    roles:['admin','superadmin'] },
   { path:'/admin',        icon:'🛡', label:'Admin Panel',  roles:['superadmin'] },
 ]
 
-const ROLE_NAMES = { gp:'Dr. Smith', nurse:'Nurse Jones', admin:'Admin Lee', superadmin:'Super Admin' }
-ROLE_NAMES.patient = 'Patient'
-const DEMO_USER_NAMES = {
-  'dr.smith': 'Dr. Smith',
-  'nurse.jones': 'Nurse Jones',
-  'admin.lee': 'Admin Lee',
-  'superadmin': 'Super Admin',
+const ROLE_NAMES = { gp:'General Practitioner', nurse:'Nurse', admin:'Admin', superadmin:'Super Admin', patient:'Patient' }
+
+function prettyUsername(username) {
+  if (!username) return ''
+  return username
+    .replace(/[._-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function getDisplayName(user, role) {
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim()
+  if (fullName) return fullName
+  if (user?.username) return prettyUsername(user.username)
+  return ROLE_NAMES[role] || 'User'
 }
 
 function getInitials(username, role) {
@@ -33,10 +43,10 @@ function getInitials(username, role) {
 }
 
 export default function Layout() {
-  const { user, role, logout, switchRole } = useAuth()
+  const { user, role, logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
-  const displayName = DEMO_USER_NAMES[user?.username] || user?.username || ROLE_NAMES[role] || 'User'
+  const displayName = getDisplayName(user, role)
   const initials = getInitials(user?.username, role)
 
   const visibleNav = NAV.filter(n => n.roles.includes(role))
@@ -98,17 +108,7 @@ export default function Layout() {
             <div className="topbar-brand">SHMS</div>
           </div>
           <div className="topbar-right">
-            {role !== 'patient' && (
-              <div className="role-switcher">
-                <span className="rs-label">Demo Role:</span>
-                <select value={role} onChange={e => switchRole(e.target.value)}>
-                  <option value="gp">GP</option>
-                  <option value="nurse">Nurse</option>
-                  <option value="admin">Admin</option>
-                  <option value="superadmin">Superadmin</option>
-                </select>
-              </div>
-            )}
+            <div className="topbar-role">{(role || 'user').toUpperCase()}</div>
             <div className="topbar-user">{displayName}</div>
           </div>
         </header>

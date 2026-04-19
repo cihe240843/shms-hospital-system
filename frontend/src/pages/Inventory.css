@@ -55,9 +55,10 @@
 	background: linear-gradient(90deg, #fff3db, #fff8eb);
 	border: 1px solid #f4d18a;
 	border-radius: var(--radius);
-	padding: 12px 16px;
+	padding: 13px 16px;
 	margin-bottom: 2px;
 	font-size: 13px;
 	color: var(--amber);
 	font-weight: 700;
+	line-height: 1.45;
 }

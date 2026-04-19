@@ -17,6 +17,7 @@ export default function AdminPanel() {
   const [tab, setTab] = useState('users')
   const [users, setUsers] = useState([])
   const [audit, setAudit] = useState([])
+  const [security, setSecurity] = useState(null)
   const [loading, setLoading] = useState(true)
   const [verifying, setVerifying] = useState(false)
   const [integrity, setIntegrity] = useState(null)
@@ -43,6 +44,11 @@ export default function AdminPanel() {
     setAudit(Array.isArray(data) ? data : data.results ?? [])
   }
 
+  const loadSecurity = async () => {
+    const { data } = await api.get('/api/audit/security/')
+    setSecurity(data)
+  }
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true)
@@ -50,8 +56,10 @@ export default function AdminPanel() {
       try {
         if (tab === 'users') {
           await loadUsers()
-        } else {
+        } else if (tab === 'audit') {
           await loadAudit()
+        } else {
+          await loadSecurity()
         }
       } catch (e) {
         setErrorMsg(e.response?.data?.detail || 'Failed to load admin data.')
@@ -148,9 +156,9 @@ export default function AdminPanel() {
       />
 
       <div className="admin-tabs">
-        {['users','audit'].map(t => (
+        {['users','audit','security'].map(t => (
           <button key={t} className={`admin-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'users' ? 'Users' : 'Audit Log'}
+            {t === 'users' ? 'Users' : t === 'audit' ? 'Audit Log' : 'Security Analysis'}
           </button>
         ))}
       </div>
@@ -225,6 +233,76 @@ export default function AdminPanel() {
                   }
                 </tbody>
               </table>
+            )}
+          </div>
+        </>
+      )}
+
+      {tab === 'security' && (
+        <>
+          <div className="security-summary-grid">
+            <div className="security-summary-card"><span className="ssc-label">Status</span><span className={`ssc-value ${security?.status === 'PASS' ? 'pass' : 'warn'}`}>{security?.status || 'N/A'}</span></div>
+            <div className="security-summary-card"><span className="ssc-label">Recent Events</span><span className="ssc-value">{security?.totals?.events ?? 0}</span></div>
+            <div className="security-summary-card"><span className="ssc-label">Login Failures</span><span className="ssc-value warn">{security?.totals?.login_fail ?? 0}</span></div>
+            <div className="security-summary-card"><span className="ssc-label">Locked Accounts</span><span className="ssc-value warn">{security?.totals?.locked_accounts ?? 0}</span></div>
+          </div>
+
+          <div className="security-grid">
+            <div className="card">
+              <h3 className="card-title">Suspicious Users</h3>
+              {loading ? <Spinner /> : (
+                <div className="security-list">
+                  {(security?.suspicious_users || []).length === 0
+                    ? <div className="empty-state"><div className="empty-icon">✅</div>No suspicious login patterns detected.</div>
+                    : security.suspicious_users.map(item => (
+                      <div key={item.username} className="security-item">
+                        <div>
+                          <strong>{item.username}</strong>
+                          <div className="security-item-sub">Failed attempts in the last 24h</div>
+                        </div>
+                        <Badge type={item.risk === 'HIGH' ? 'red' : item.risk === 'MEDIUM' ? 'amber' : 'blue'}>{item.failures} · {item.risk}</Badge>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 className="card-title">Top IP Addresses</h3>
+              {loading ? <Spinner /> : (
+                <div className="security-list">
+                  {(security?.top_ips || []).length === 0
+                    ? <div className="empty-state"><div className="empty-icon">🌐</div>No IP activity recorded.</div>
+                    : security.top_ips.map(item => (
+                      <div key={item.ip_address} className="security-item">
+                        <div>
+                          <strong>{item.ip_address}</strong>
+                          <div className="security-item-sub">Recent events</div>
+                        </div>
+                        <Badge type="gray">{item.events}</Badge>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="card security-locks-card">
+            <h3 className="card-title">Locked Accounts</h3>
+            {loading ? <Spinner /> : (
+              <div className="security-list">
+                {(security?.locked_accounts_list || []).length === 0
+                  ? <div className="empty-state"><div className="empty-icon">🔓</div>No locked accounts.</div>
+                  : security.locked_accounts_list.map(item => (
+                    <div key={item.username} className="security-item">
+                      <div>
+                        <strong>{item.username}</strong>
+                        <div className="security-item-sub">Locked until {item.locked_until ? new Date(item.locked_until).toLocaleString() : '-'}</div>
+                      </div>
+                      <Badge type="red">{item.failed_attempts} failed</Badge>
+                    </div>
+                  ))}
+              </div>
             )}
           </div>
         </>

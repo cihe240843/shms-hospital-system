@@ -1,17 +1,18 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from apps.common.fields import EncryptedTextField
 
 class Patient(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    fhir_id = models.CharField(max_length=100, blank=True, null=True)
+    fhir_id = EncryptedTextField(blank=True, null=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     dob = models.DateField()
-    medicare_number = models.CharField(max_length=20, blank=True)
-    phone = models.CharField(max_length=20, blank=True)
+    medicare_number = EncryptedTextField(blank=True)
+    phone = EncryptedTextField(blank=True)
     email = models.EmailField(blank=True)
-    address = models.TextField(blank=True)
+    address = EncryptedTextField(blank=True)
     user = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,

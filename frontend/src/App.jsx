@@ -14,9 +14,24 @@ import PatientPortal from './pages/PatientPortal'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 
+const PAGE_ROLES = {
+  dashboard: ['gp', 'nurse', 'admin', 'superadmin'],
+  portal: ['patient'],
+  patients: ['gp', 'nurse', 'admin', 'superadmin'],
+  appointments: ['gp', 'nurse', 'admin', 'superadmin'],
+  vitals: ['gp', 'nurse', 'superadmin'],
+  billing: ['admin', 'superadmin'],
+  inventory: ['admin', 'superadmin'],
+  admin: ['superadmin'],
+}
+
 function ProtectedRoute({ page, children }) {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   if (!user) return <Navigate to="/login" replace />
+  const allowed = PAGE_ROLES[page]
+  if (allowed && !allowed.includes(role)) {
+    return <Navigate to={role === 'patient' ? '/portal' : '/dashboard'} replace />
+  }
   return children
 }
 

@@ -7,3 +7,4 @@ python-decouple==3.8
 requests==2.31.*
 minio==7.2.*
 pytest-django==4.8.*
+cryptography==42.0.*

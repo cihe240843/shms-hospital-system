@@ -52,3 +52,7 @@
 .appts-table-wrap {
   border-top: 4px solid rgba(29, 78, 216, 0.3);
 }
+
+.appointments-page .page-desc {
+  max-width: 720px;
+}

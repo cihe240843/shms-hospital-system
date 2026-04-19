@@ -1,4 +1,6 @@
 from pathlib import Path
+import base64
+import hashlib
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +24,7 @@ INSTALLED_APPS = [
     "apps.inventory",
     "apps.billing",
     "apps.audit",
+    "apps.vitals",
 ]
 
 MIDDLEWARE = [
@@ -77,7 +80,13 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://localhost:3000",
+]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost:\\d+$",
+    r"^http://127\\.0\\.0\\.1:\\d+$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -101,6 +110,11 @@ EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=False, cast=bool)
 EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
 EMAIL_TIMEOUT = config("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@shms.local")
+DEMO_MFA_EMAIL = config("DEMO_MFA_EMAIL", default="testusers843@gmail.com")
+FIELD_ENCRYPTION_KEY = config(
+    "FIELD_ENCRYPTION_KEY",
+    default=base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode("utf-8")).digest()).decode("ascii"),
+)
 
 # Authentication security (brute-force + MFA)
 AUTH_MAX_FAILED_ATTEMPTS = config("AUTH_MAX_FAILED_ATTEMPTS", default=5, cast=int)

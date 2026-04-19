@@ -234,36 +234,15 @@
   gap: 14px;
 }
 
-.role-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(100deg, #0f2342, #173461);
-  border-radius: 999px;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.rs-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.role-switcher select {
-  background: none;
-  border: none;
-  color: #b6fff8;
-  font-size: 12px;
+.topbar-role {
+  font-size: 11px;
   font-weight: 800;
-  outline: none;
-}
-
-.role-switcher option {
-  background: var(--navy);
-  color: #fff;
+  letter-spacing: 0.5px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #0b3f5a;
+  background: linear-gradient(90deg, #d9f7f4, #d7ebff);
+  border: 1px solid #b8d7eb;
 }
 
 .topbar-user {
@@ -334,10 +313,6 @@
 
   .content-area > * {
     width: 100%;
-  }
-
-  .role-switcher {
-    display: none;
   }
 
   .topbar {

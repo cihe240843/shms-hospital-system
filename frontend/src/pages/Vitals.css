@@ -13,6 +13,25 @@
 	gap: 8px;
 }
 
+.card-headline-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.read-only-note {
+	padding: 14px 16px;
+	background: linear-gradient(90deg, #eef7ff, #f7fbff);
+	border: 1px solid #cfe2ff;
+	border-radius: var(--radius);
+	font-size: 13px;
+	color: var(--text2);
+	line-height: 1.5;
+	margin-bottom: 14px;
+}
+
 .fhir-badge {
 	font-size: 10px;
 	background: rgba(24, 168, 157, 0.12);
@@ -30,12 +49,31 @@
 	margin-bottom: 14px;
 }
 
+.triage-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+
+.triage-grid.compact {
+	grid-template-columns: repeat(3, 1fr);
+}
+
 .vital-field label {
 	display: block;
 	font-size: 12px;
 	font-weight: 700;
 	color: var(--text2);
 	margin-bottom: 5px;
+}
+
+.vr-complaint {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--navy);
+	margin-bottom: 10px;
+	line-height: 1.45;
 }
 
 .unit {
@@ -109,8 +147,32 @@
 	color: var(--red);
 }
 
+.vr-notes {
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px dashed var(--border2);
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--text2);
+}
+
+.vr-notes strong {
+	color: var(--navy);
+}
+
 @media (max-width: 800px) {
 	.vitals-layout {
 		grid-template-columns: 1fr;
+	}
+
+	.triage-grid,
+	.triage-grid.compact,
+	.vitals-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.card-headline-row {
+		align-items: flex-start;
+		flex-direction: column;
 	}
 }

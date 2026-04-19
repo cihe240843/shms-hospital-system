@@ -17,13 +17,40 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('shms_user')
-    if (stored) {
-      const u = JSON.parse(stored)
-      setUser(u)
-      setRole(u.role)
+    const hydrateAuth = async () => {
+      const token = localStorage.getItem('access_token')
+      const stored = localStorage.getItem('shms_user')
+
+      if (!token || !stored) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const cached = JSON.parse(stored)
+        const profile = await fetchProfile(token)
+        const userObj = {
+          username: profile.username || cached.username || '',
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
+          email: profile.email || '',
+          role: profile.role || cached.role || 'gp',
+          access: token,
+          refresh: localStorage.getItem('refresh_token') || cached.refresh,
+        }
+        localStorage.setItem('shms_user', JSON.stringify(userObj))
+        setUser(userObj)
+        setRole(userObj.role)
+      } catch {
+        localStorage.clear()
+        setUser(null)
+        setRole(null)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    hydrateAuth()
   }, [])
 
   const finalizeLogin = async (username, data) => {
@@ -65,17 +92,8 @@ export function AuthProvider({ children }) {
     setRole(null)
   }
 
-  // For demo: allow role switch without re-login
-  const switchRole = (newRole) => {
-    if (!user) return
-    const updated = { ...user, role: newRole }
-    localStorage.setItem('shms_user', JSON.stringify(updated))
-    setUser(updated)
-    setRole(newRole)
-  }
-
   return (
-    <AuthContext.Provider value={{ user, role, loading, initiateLogin, verifyLogin, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, role, loading, initiateLogin, verifyLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -15,6 +15,10 @@
 	overflow: hidden;
 }
 
+.billing-page .table-wrap {
+	border-top: 4px solid rgba(31, 144, 217, 0.28);
+}
+
 .billing-stat::before {
 	content: '';
 	position: absolute;
