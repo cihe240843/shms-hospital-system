@@ -95,6 +95,7 @@ class SecurityAnalysisView(APIView):
                     "username": state.user.username,
                     "locked_until": state.locked_until,
                     "failed_attempts": state.failed_attempts,
+                    "is_patient": hasattr(state.user, "patient_profile") and state.user.patient_profile is not None,
                 }
             )
 
@@ -472,6 +473,102 @@ class VerifyUnlockTokenView(APIView):
             {
                 "detail": "Account unlocked successfully. You can now log in.",
                 "user_id": user.id,
+            },
+            status=200,
+        )
+
+
+class ResendUnlockTokenView(APIView):
+    """
+    Resend patient unlock verification email with cooldown protection.
+    Can be called by superadmin (from admin panel) or by patient (from unlock page).
+    """
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        if not user_id:
+            _audit_event(None, "UNLOCK_RESEND_FAIL", "auth", "unknown", request)
+            return Response({"detail": "user_id is required."}, status=400)
+
+        try:
+            target_user = User.objects.get(pk=user_id, is_superuser=False)
+        except User.DoesNotExist:
+            _audit_event(None, "UNLOCK_RESEND_FAIL", "auth", str(user_id), request)
+            return Response({"detail": "User not found."}, status=404)
+
+        is_patient = hasattr(target_user, "patient_profile") and target_user.patient_profile is not None
+        if not is_patient:
+            _audit_event(target_user, "UNLOCK_RESEND_FAIL", "auth", target_user.username, request)
+            return Response({"detail": "Only patient accounts support unlock resend."}, status=400)
+
+        state = LoginSecurityState.objects.filter(user=target_user).first()
+        if not state or not state.is_locked():
+            _audit_event(target_user, "UNLOCK_RESEND_FAIL", "auth", target_user.username, request)
+            return Response({"detail": "Account is not currently locked."}, status=400)
+
+        if not target_user.email:
+            _audit_event(target_user, "UNLOCK_RESEND_FAIL", "auth", target_user.username, request)
+            return Response({"detail": "Patient email is not configured."}, status=400)
+
+        cooldown_seconds = int(getattr(settings, "AUTH_UNLOCK_RESEND_COOLDOWN_SECONDS", 60))
+        cooldown_since = timezone.now() - timedelta(seconds=cooldown_seconds)
+        recent_token = AccountUnlockToken.objects.filter(
+            user=target_user,
+            created_at__gte=cooldown_since,
+        ).order_by("-created_at").first()
+
+        actor = target_user
+        if getattr(request, "user", None) and request.user.is_authenticated:
+            actor = request.user
+
+        if recent_token:
+            retry_after = cooldown_seconds - int((timezone.now() - recent_token.created_at).total_seconds())
+            if retry_after > 0:
+                _audit_event(actor, "UNLOCK_RESEND_WAIT", "auth", target_user.username, request)
+                return Response(
+                    {
+                        "detail": "Please wait before requesting another unlock email.",
+                        "retry_seconds": retry_after,
+                    },
+                    status=429,
+                )
+
+        token = secrets.token_urlsafe(32)
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        unlock_window_minutes = int(getattr(settings, "AUTH_UNLOCK_VERIFY_MINUTES", 30))
+
+        AccountUnlockToken.objects.create(
+            user=target_user,
+            token_hash=token_hash,
+            expires_at=timezone.now() + timedelta(minutes=unlock_window_minutes),
+        )
+
+        unlock_link = (
+            f"{getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5173')}"
+            f"/unlock-account?token={token}&user={target_user.id}"
+        )
+
+        send_mail(
+            subject="Account Unlock Request (Resent)",
+            message=(
+                "Your account unlock link has been re-issued.\n\n"
+                f"Use this link within {unlock_window_minutes} minutes:\n\n"
+                f"{unlock_link}\n\n"
+                "If you did not request this, please ignore this email."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[target_user.email],
+            fail_silently=False,
+        )
+
+        _audit_event(actor, "UNLOCK_RESEND_SENT", "auth", target_user.username, request)
+
+        return Response(
+            {
+                "detail": "Unlock verification email resent.",
+                "cooldown_seconds": cooldown_seconds,
             },
             status=200,
         )

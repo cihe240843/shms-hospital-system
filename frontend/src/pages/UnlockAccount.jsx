@@ -9,6 +9,7 @@ export default function UnlockAccount() {
   const token = params.get('token') || ''
   const userId = params.get('user') || ''
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [verified, setVerified] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
@@ -48,6 +49,30 @@ export default function UnlockAccount() {
     }
   }
 
+  const handleResend = async () => {
+    setErrorMsg('')
+    setSuccessMsg('')
+
+    if (!userId) {
+      setErrorMsg('Invalid unlock link.')
+      return
+    }
+
+    setResending(true)
+    try {
+      const { data } = await api.post('/api/audit/unlock/resend/', {
+        user_id: parseInt(userId, 10)
+      })
+      setSuccessMsg(data?.detail || 'Unlock verification email resent.')
+    } catch (e) {
+      const retry = e.response?.data?.retry_seconds
+      const detail = e.response?.data?.detail || 'Unable to resend unlock email.'
+      setErrorMsg(retry ? `${detail} Try again in ${retry}s.` : detail)
+    } finally {
+      setResending(false)
+    }
+  }
+
   return (
     <div className="login-page">
       <div className="login-bg">
@@ -79,6 +104,16 @@ export default function UnlockAccount() {
               className="login-btn"
             >
               {loading ? '🔄 Verifying...' : verified ? '✓ Account Unlocked' : '🔓 Unlock My Account'}
+            </button>
+
+            <button
+              type="button"
+              disabled={resending || verified || !userId}
+              className="login-btn"
+              style={{ marginTop: '10px', background: '#2b3c52' }}
+              onClick={handleResend}
+            >
+              {resending ? '📨 Sending...' : '📨 Resend Unlock Link'}
             </button>
 
             <div className="login-footer">

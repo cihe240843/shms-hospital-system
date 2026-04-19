@@ -292,6 +292,23 @@ export default function AdminPanel() {
     }
   }
 
+  const handleResendUnlock = async (lockedAccount) => {
+    resetMessages()
+    try {
+      setSaving(true)
+      const { data } = await api.post('/api/audit/unlock/resend/', {
+        user_id: lockedAccount.id,
+      })
+      setSuccessMsg(data?.detail || `Unlock verification email resent to ${lockedAccount.username}.`)
+    } catch (e) {
+      const retry = e.response?.data?.retry_seconds
+      const detail = e.response?.data?.detail || 'Unable to resend unlock email.'
+      setErrorMsg(retry ? `${detail} Try again in ${retry}s.` : detail)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const roleBadge = r => {
     const role = (r || '').toLowerCase()
     const map = { gp:'blue', nurse:'blue', admin:'amber', superadmin:'red', patient:'gray' }
@@ -484,6 +501,11 @@ export default function AdminPanel() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Badge type="red">{item.failed_attempts} failed</Badge>
+                        {item.is_patient && (
+                          <button className="btn-small btn-primary" onClick={() => handleResendUnlock(item)} disabled={saving}>
+                            📨 Resend
+                          </button>
+                        )}
                         <button className="btn-small btn-primary" onClick={() => handleUnlockAccount(item)} disabled={saving}>
                           🔓 Unlock
                         </button>

@@ -9,6 +9,7 @@ from .views import (
 	DoctorListView,
 	UnlockAccountRequestView,
 	VerifyUnlockTokenView,
+	ResendUnlockTokenView,
 )
 
 router = DefaultRouter()
@@ -21,5 +22,6 @@ urlpatterns = [
 	path("users/<int:user_id>/", UserManagementDetailView.as_view(), name="audit_user_detail"),
 	path("unlock/request/", UnlockAccountRequestView.as_view(), name="audit_unlock_request"),
 	path("unlock/verify/", VerifyUnlockTokenView.as_view(), name="audit_unlock_verify"),
+	path("unlock/resend/", ResendUnlockTokenView.as_view(), name="audit_unlock_resend"),
 	path("", include(router.urls)),
 ]
