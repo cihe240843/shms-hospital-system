@@ -1,13 +1,16 @@
 import hashlib
+import secrets
 from datetime import timedelta
+from django.conf import settings
 from django.contrib.auth.models import Group, User
+from django.core.mail import send_mail
 from django.db.models import Count
 from django.utils import timezone
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import AuditLog, LoginSecurityState, MFAChallenge
+from .models import AuditLog, LoginSecurityState, MFAChallenge, AccountUnlockToken
 from .serializers import AuditLogSerializer
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,6 +71,7 @@ class SecurityAnalysisView(APIView):
         for state in LoginSecurityState.objects.select_related("user").filter(locked_until__gt=timezone.now()).order_by("-locked_until"):
             locked_accounts.append(
                 {
+                    "id": state.user.id,
                     "username": state.user.username,
                     "locked_until": state.locked_until,
                     "failed_attempts": state.failed_attempts,
@@ -243,3 +247,152 @@ class DoctorListView(APIView):
                     }
                 )
         return Response(doctors)
+
+
+class UnlockAccountRequestView(APIView):
+    """
+    Superadmin initiate account unlock.
+    - Staff users: instant unlock
+    - Patient users: send verification email
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @staticmethod
+    def is_superadmin(user):
+        return UserManagementView.infer_role(user) == "superadmin"
+
+    @staticmethod
+    def is_patient(user):
+        return hasattr(user, "patient_profile") and user.patient_profile is not None
+
+    def post(self, request):
+        """Initiate unlock for a locked account."""
+        if not self.is_superadmin(request.user):
+            return Response({"detail": "Only superadmin can unlock accounts."}, status=403)
+
+        user_id = request.data.get("user_id")
+        if not user_id:
+            return Response({"detail": "user_id is required."}, status=400)
+
+        try:
+            target_user = User.objects.get(pk=user_id, is_superuser=False)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=404)
+
+        state = LoginSecurityState.objects.filter(user=target_user).first()
+        if not state or not state.is_locked():
+            return Response({"detail": "Account is not locked."}, status=400)
+
+        is_patient = self.is_patient(target_user)
+
+        if is_patient:
+            # Send verification email for patient
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+            unlock_window_minutes = getattr(settings, "AUTH_UNLOCK_VERIFY_MINUTES", 30)
+
+            unlock_token = AccountUnlockToken.objects.create(
+                user=target_user,
+                token_hash=token_hash,
+                expires_at=timezone.now() + timedelta(minutes=unlock_window_minutes),
+            )
+
+            unlock_link = f"{getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:5173')}/unlock-account?token={token}&user={user_id}"
+
+            send_mail(
+                subject="Account Unlock Request",
+                message=f"""Your account has been locked due to failed login attempts.
+
+You can verify your identity to unlock your account by clicking the link below within {unlock_window_minutes} minutes:
+
+{unlock_link}
+
+If you did not request this, please ignore this email.
+""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[target_user.email],
+                fail_silently=False,
+            )
+
+            return Response(
+                {
+                    "detail": "Verification email sent to patient.",
+                    "message": "Patient must verify identity via email link.",
+                    "expires_in_minutes": unlock_window_minutes,
+                },
+                status=200,
+            )
+        else:
+            # Instant unlock for staff
+            state.failed_attempts = 0
+            state.locked_until = None
+            state.save(update_fields=["failed_attempts", "locked_until", "updated_at"])
+
+            return Response(
+                {
+                    "detail": f"Account {target_user.username} unlocked successfully.",
+                    "user_id": target_user.id,
+                },
+                status=200,
+            )
+
+
+class VerifyUnlockTokenView(APIView):
+    """
+    Patient verifies unlock token from email to unlock their account.
+    """
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        """Verify unlock token and unlock account."""
+        token = (request.data.get("token") or "").strip()
+        user_id = request.data.get("user_id")
+
+        if not token or not user_id:
+            return Response({"detail": "token and user_id are required."}, status=400)
+
+        try:
+            user = User.objects.get(pk=user_id, is_superuser=False)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=404)
+
+        # Check if is patient
+        if not (hasattr(user, "patient_profile") and user.patient_profile is not None):
+            return Response({"detail": "Only patient accounts can self-verify unlock."}, status=403)
+
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+        from .models import AccountUnlockToken
+
+        unlock_token = AccountUnlockToken.objects.filter(
+            user=user,
+            token_hash=token_hash,
+            verified_at__isnull=True,
+        ).first()
+
+        if not unlock_token:
+            return Response({"detail": "Invalid or already-used unlock token."}, status=401)
+
+        if unlock_token.expires_at < timezone.now():
+            return Response({"detail": "Unlock token has expired."}, status=401)
+
+        # Mark token as verified
+        unlock_token.verified_at = timezone.now()
+        unlock_token.save(update_fields=["verified_at"])
+
+        # Unlock the account
+        state = LoginSecurityState.objects.filter(user=user).first()
+        if state:
+            state.failed_attempts = 0
+            state.locked_until = None
+            state.save(update_fields=["failed_attempts", "locked_until", "updated_at"])
+
+        return Response(
+            {
+                "detail": "Account unlocked successfully. You can now log in.",
+                "user_id": user.id,
+            },
+            status=200,
+        )

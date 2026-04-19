@@ -6,11 +6,11 @@ import './Layout.css'
 const NAV = [
   { path:'/dashboard',    icon:'⊞', label:'Dashboard',    roles:['gp','nurse','admin','superadmin'] },
   { path:'/portal',       icon:'🧾', label:'My Portal',    roles:['patient'] },
-  { path:'/patients',     icon:'👤', label:'Patients',     roles:['gp','nurse','admin','superadmin'] },
-  { path:'/appointments', icon:'📅', label:'Appointments', roles:['gp','nurse','admin','superadmin'] },
-  { path:'/vitals',       icon:'💓', label:'Vitals', roles:['gp','nurse','superadmin'] },
-  { path:'/billing',      icon:'💳', label:'Billing',      roles:['admin','superadmin'] },
-  { path:'/inventory',    icon:'📦', label:'Inventory',    roles:['admin','superadmin'] },
+  { path:'/patients',     icon:'👤', label:'Patients',     roles:['gp','nurse','admin'] },
+  { path:'/appointments', icon:'📅', label:'Appointments', roles:['gp','nurse','admin'] },
+  { path:'/vitals',       icon:'💓', label:'Vitals', roles:['gp','nurse'] },
+  { path:'/billing',      icon:'💳', label:'Billing',      roles:['admin'] },
+  { path:'/inventory',    icon:'📦', label:'Inventory',    roles:['admin'] },
   { path:'/admin',        icon:'🛡', label:'Admin Panel',  roles:['superadmin'] },
 ]
 

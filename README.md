@@ -53,11 +53,11 @@ Django REST API (:8000)
 | Page         | GP | Nurse | Admin | Superadmin |
 |--------------|----|-------|-------|------------|
 | Dashboard    | ✓  | ✓     | ✓     | ✓          |
-| Patients     | ✓  | ✓ (read) | —  | ✓          |
-| Appointments | ✓  | ✓     | —     | ✓          |
-| Vitals       | —  | ✓     | —     | ✓          |
-| Billing      | —  | —     | ✓     | ✓          |
-| Inventory    | —  | —     | ✓     | ✓          |
+| Patients     | ✓  | ✓ (read) | ✓  | —          |
+| Appointments | ✓  | ✓     | ✓     | —          |
+| Vitals       | ✓  | ✓     | —     | —          |
+| Billing      | —  | —     | ✓     | —          |
+| Inventory    | —  | —     | ✓     | —          |
 | Admin Panel  | —  | —     | —     | ✓          |
 
 ---

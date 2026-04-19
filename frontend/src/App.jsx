@@ -17,11 +17,11 @@ import ResetPassword from './pages/ResetPassword'
 const PAGE_ROLES = {
   dashboard: ['gp', 'nurse', 'admin', 'superadmin'],
   portal: ['patient'],
-  patients: ['gp', 'nurse', 'admin', 'superadmin'],
-  appointments: ['gp', 'nurse', 'admin', 'superadmin'],
-  vitals: ['gp', 'nurse', 'superadmin'],
-  billing: ['admin', 'superadmin'],
-  inventory: ['admin', 'superadmin'],
+  patients: ['gp', 'nurse', 'admin'],
+  appointments: ['gp', 'nurse', 'admin'],
+  vitals: ['gp', 'nurse'],
+  billing: ['admin'],
+  inventory: ['admin'],
   admin: ['superadmin'],
 }
 

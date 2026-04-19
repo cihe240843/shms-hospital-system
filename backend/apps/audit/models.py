@@ -48,3 +48,15 @@ class MFAChallenge(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class AccountUnlockToken(models.Model):
+    """Tracks unlock verification tokens for locked patient accounts."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="unlock_tokens")
+    token_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
