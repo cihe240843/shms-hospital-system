@@ -13,6 +13,7 @@ import ActivateAccount from './pages/ActivateAccount'
 import PatientPortal from './pages/PatientPortal'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import UnlockAccount from './pages/UnlockAccount'
 
 const PAGE_ROLES = {
   dashboard: ['gp', 'nurse', 'admin', 'superadmin'],
@@ -41,8 +42,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
       <Route path="/activate" element={<ActivateAccount />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/forget-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/unlock-account" element={<UnlockAccount />} />
       <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
       <Route element={<Layout />}>
         <Route path="/dashboard"   element={<ProtectedRoute page="dashboard">{role === 'patient' ? <Navigate to="/portal" /> : <Dashboard />}</ProtectedRoute>} />
