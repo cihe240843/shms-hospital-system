@@ -26,8 +26,13 @@ const EMPTY_PATIENT = {
   primary_doctor: '',
 }
 
+const AUDIT_ACTION_LABELS = {
+  SUPADMIN_PAT_CREATE: 'SUPERADMIN_PATIENT_CREATE',
+}
+
 export default function AdminPanel() {
   const [tab, setTab] = useState('staff')
+  const [auditFilter, setAuditFilter] = useState('all')
   const [users, setUsers] = useState([])
   const [patients, setPatients] = useState([])
   const [doctors, setDoctors] = useState([])
@@ -318,6 +323,11 @@ export default function AdminPanel() {
     return <Badge type={map[role] || 'gray'}>{role.toUpperCase()}</Badge>
   }
 
+  const auditActionLabel = (action) => AUDIT_ACTION_LABELS[action] || action
+  const visibleAudit = auditFilter === 'superadmin-patient-create'
+    ? audit.filter(log => log.action === 'SUPADMIN_PAT_CREATE')
+    : audit
+
   return (
     <div className="module-page admin-page">
       <PageHeader
@@ -409,6 +419,21 @@ export default function AdminPanel() {
             </button>
           </div>
 
+          <div className="audit-filters" style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+            <button
+              className={`btn-small ${auditFilter === 'all' ? 'btn-primary' : ''}`}
+              onClick={() => setAuditFilter('all')}
+            >
+              All Events
+            </button>
+            <button
+              className={`btn-small ${auditFilter === 'superadmin-patient-create' ? 'btn-primary' : ''}`}
+              onClick={() => setAuditFilter('superadmin-patient-create')}
+            >
+              Superadmin Patient Creates
+            </button>
+          </div>
+
           <div className="table-wrap">
             {loading ? <Spinner /> : (
               <table className="data-table audit-tbl">
@@ -416,15 +441,15 @@ export default function AdminPanel() {
                   <tr><th>ID</th><th>User</th><th>Action</th><th>Resource</th><th>Resource ID</th><th>Timestamp</th><th>Row Hash</th></tr>
                 </thead>
                 <tbody>
-                  {audit.length === 0
+                  {visibleAudit.length === 0
                     ? <tr><td colSpan={7}><div className="empty-state"><div className="empty-icon">📋</div>No audit entries yet. Actions will appear here.</div></td></tr>
-                    : audit.map(log => (
+                    : visibleAudit.map(log => (
                       <tr key={log.id}>
                         <td style={{fontFamily:'monospace',fontSize:11}}>{log.id}</td>
                         <td>{log.username || '-'}</td>
                         <td>
                           <Badge type={log.action==='READ'?'blue':log.action==='WRITE'?'amber':'red'}>
-                            {log.action}
+                            {auditActionLabel(log.action)}
                           </Badge>
                         </td>
                         <td>{log.resource}</td>
