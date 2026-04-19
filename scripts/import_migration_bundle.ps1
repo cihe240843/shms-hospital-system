@@ -104,10 +104,6 @@ Run-Step "Start full stack" {
     docker-compose up -d | Out-Null
 }
 
-Run-Step "Run Django migrations for safety" {
-    docker-compose exec -T backend python manage.py migrate | Out-Null
-}
-
 Run-Step "Clean temporary import directory" {
     Remove-Item $extractDir -Recurse -Force
 }
