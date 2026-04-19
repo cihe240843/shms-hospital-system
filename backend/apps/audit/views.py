@@ -387,15 +387,36 @@ class VerifyUnlockTokenView(APIView):
         user_id = request.data.get("user_id")
 
         if not token or not user_id:
+            _audit_event(
+                None,
+                "UNLOCK_FAIL_INPUT",
+                "auth",
+                str(user_id or "unknown"),
+                request,
+            )
             return Response({"detail": "token and user_id are required."}, status=400)
 
         try:
             user = User.objects.get(pk=user_id, is_superuser=False)
         except User.DoesNotExist:
+            _audit_event(
+                None,
+                "UNLOCK_FAIL_NOUSER",
+                "auth",
+                str(user_id),
+                request,
+            )
             return Response({"detail": "User not found."}, status=404)
 
         # Check if is patient
         if not (hasattr(user, "patient_profile") and user.patient_profile is not None):
+            _audit_event(
+                user,
+                "UNLOCK_FAIL_ROLE",
+                "auth",
+                user.username,
+                request,
+            )
             return Response({"detail": "Only patient accounts can self-verify unlock."}, status=403)
 
         token_hash = hashlib.sha256(token.encode()).hexdigest()
@@ -409,9 +430,23 @@ class VerifyUnlockTokenView(APIView):
         ).first()
 
         if not unlock_token:
+            _audit_event(
+                user,
+                "UNLOCK_FAIL_TOKEN",
+                "auth",
+                user.username,
+                request,
+            )
             return Response({"detail": "Invalid or already-used unlock token."}, status=401)
 
         if unlock_token.expires_at < timezone.now():
+            _audit_event(
+                user,
+                "UNLOCK_FAIL_EXPIRED",
+                "auth",
+                user.username,
+                request,
+            )
             return Response({"detail": "Unlock token has expired."}, status=401)
 
         # Mark token as verified
